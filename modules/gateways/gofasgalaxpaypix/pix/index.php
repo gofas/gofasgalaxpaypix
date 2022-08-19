@@ -15,14 +15,14 @@ function gofasgalaxpaypix_link($params){
 		require __DIR__.'/includes/params.php';
 		$log['params'] = $params;
 		if($params['amount'] >= $params['minimunamount']){
-			foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggpwhmcsurl') -> get( array( 'value','created_at') ) as $ggpwhmcsurl_ ){
-				$ggpwhmcsurl					= $ggpwhmcsurl_->value;
+			foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggppwhmcsurl') -> get( array( 'value','created_at') ) as $ggppwhmcsurl_ ){
+				$ggppwhmcsurl					= $ggppwhmcsurl_->value;
 			}
-			$result .= '<script type="text/javascript" src="'.$ggpwhmcsurl.'modules/gateways/gofasgalaxpay/assets/js/copy2clipboard.js" charset="UTF-8"></script>';
-			$result .= '<script type="text/javascript" src="'.$ggpwhmcsurl.'modules/gateways/gofasgalaxpay/assets/js/scripts.js" charset="UTF-8"></script>';
-			$result .= '<input type="hidden" id="system_url" value="'.$ggpwhmcsurl.'">';
+			$result .= '<script type="text/javascript" src="'.$ggppwhmcsurl.'modules/gateways/gofasgalaxpaypix/assets/js/copy2clipboard.js" charset="UTF-8"></script>';
+			$result .= '<script type="text/javascript" src="'.$ggppwhmcsurl.'modules/gateways/gofasgalaxpaypix/assets/js/scripts.js" charset="UTF-8"></script>';
+			$result .= '<input type="hidden" id="system_url" value="'.$ggppwhmcsurl.'">';
 			$result .= '<input type="hidden" id="invoice_id" value="'.$params['invoiceid'].'">';
-			$access_token_ = ggp_get_token($api_url.'authorization-server/oauth/token',$client_id,$client_secret);
+			$access_token_ = ggpp_get_token($api_url.'authorization-server/oauth/token',$client_id,$client_secret);
 			 if($access_token_['response']['access_token']){
 				 $access_token = $access_token_['response']['access_token'];
 			 }
@@ -32,7 +32,7 @@ function gofasgalaxpaypix_link($params){
 			$log['access_token_'] = $access_token_;
 
 			/// Webhooks
-			$webhook_url = $ggpwhmcsurl.'modules/gateways/gofasgalaxpay/includes/callback.php';
+			$webhook_url = $ggppwhmcsurl.'modules/gateways/gofasgalaxpaypix/includes/callback.php';
 			$url=$charge_url.'notifications/webhooks';
 			$header = [
 				'content-type: application/json;charset=UTF-8',
@@ -44,7 +44,7 @@ function gofasgalaxpaypix_link($params){
 			];
 			/// Check
 			$check_webhook_request = 'GET';
-			$check_webhook = ggp_charge($url,$access_token,$private_token,$header,$check_webhook_request);
+			$check_webhook = ggpp_charge($url,$access_token,$private_token,$header,$check_webhook_request);
 			$log['check_webhook'] = $check_webhook;
 			if($check_webhook['_embedded']['webhooks']){
 				foreach($check_webhook['_embedded']['webhooks'] as $key => $value){
@@ -82,7 +82,7 @@ function gofasgalaxpaypix_link($params){
 				];
 			
 				$del_url=$charge_url.'notifications/webhooks/'.$webhooks_to_exclude['0']['id'];
-				$delete_webhook = ggp_charge($del_url,$access_token,$private_token,$del_header,'DELETE');
+				$delete_webhook = ggpp_charge($del_url,$access_token,$private_token,$del_header,'DELETE');
 				$log['delete_webhook'] = $delete_webhook;
 			}
 
@@ -92,7 +92,7 @@ function gofasgalaxpaypix_link($params){
 			else{
 				// Create webhook
 				$webhook_request = ['url'=>$webhook_url,'eventTypes'=>['PAYMENT_NOTIFICATION','CHARGE_STATUS_CHANGED']];
-				$webhook = ggp_charge($url,$access_token,$private_token,$header,$webhook_request);
+				$webhook = ggpp_charge($url,$access_token,$private_token,$header,$webhook_request);
 			}
 			if($webhook['error']){
 				$error .= $webhook['details']['0']['message'];
@@ -104,15 +104,15 @@ function gofasgalaxpaypix_link($params){
 				$log['pix_key'] = $pix_key;
 			}
 			if(!$pix_key){
-				$ggp_ramdom_key_name = 'ggp_ramdom_key_'.$api_mode;
-				foreach( Capsule::table('tblconfiguration') -> where('setting', '=', $ggp_ramdom_key_name) -> get( array( 'value','created_at') ) as $ggp_ramdom_key_ ){
-					$ggp_ramdom_key = json_decode($ggp_ramdom_key_->value, true);
-					$log[$ggp_ramdom_key_name] = $ggp_ramdom_key;
+				$ggpp_ramdom_key_name = 'ggpp_ramdom_key_'.$api_mode;
+				foreach( Capsule::table('tblconfiguration') -> where('setting', '=', $ggpp_ramdom_key_name) -> get( array( 'value','created_at') ) as $ggpp_ramdom_key_ ){
+					$ggpp_ramdom_key = json_decode($ggpp_ramdom_key_->value, true);
+					$log[$ggpp_ramdom_key_name] = $ggpp_ramdom_key;
 				}
-				if($ggp_ramdom_key and ((string)$ggp_ramdom_key['api_mode'] === (string)$api_mode)){
-					$pix_key = $ggp_ramdom_key['key'];
+				if($ggpp_ramdom_key and ((string)$ggpp_ramdom_key['api_mode'] === (string)$api_mode)){
+					$pix_key = $ggpp_ramdom_key['key'];
 				}
-				if(!$ggp_ramdom_key || ((string)$ggp_ramdom_key['api_mode'] !== (string)$api_mode)){			
+				if(!$ggpp_ramdom_key || ((string)$ggpp_ramdom_key['api_mode'] !== (string)$api_mode)){			
 					$url=$charge_url.'pix/keys';
 					$header = [
 						'content-type: application/json;charset=UTF-8',
@@ -120,10 +120,10 @@ function gofasgalaxpaypix_link($params){
 						'x-platform: gofaspixparawhmcs',
 						'X-Api-Version: 2',
 						'X-Resource-Token: '.$private_token,
-						'X-Idempotency-Key: '.ggp_gen_uuid(),
+						'X-Idempotency-Key: '.ggpp_gen_uuid(),
 						'Authorization: Bearer '.$access_token,
 					];
-					$ramdom_key = ggp_charge($url,$access_token,$private_token,$header,['type'=>'RANDOM_KEY']);
+					$ramdom_key = ggpp_charge($url,$access_token,$private_token,$header,['type'=>'RANDOM_KEY']);
 					if($ramdom_key['error']){
 						$error .= $ramdom_key['details']['0']['message'];
 					}
@@ -132,16 +132,16 @@ function gofasgalaxpaypix_link($params){
 					if(!$error){
 						$pix_key = $ramdom_key['key'];
 					}
-					if(!$error and !$ggp_ramdom_key){
-						try { Capsule::table('tblconfiguration')->insert(array('setting' => $ggp_ramdom_key_name, 'value' => json_encode($ramdom_key), 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
+					if(!$error and !$ggpp_ramdom_key){
+						try { Capsule::table('tblconfiguration')->insert(array('setting' => $ggpp_ramdom_key_name, 'value' => json_encode($ramdom_key), 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
 						catch (\Exception $e){ $e->getMessage(); }
 					}
 				}
 			}
-			$saved_qr_code = ggp_get_local_qrc($params['invoiceid']);
+			$saved_qr_code = ggpp_get_local_qrc($params['invoiceid']);
 			if($saved_qr_code['imageInBase64'] and (float)$saved_qr_code['amount'] === (float)$params['amount'] and $saved_qr_code['api_mode'] === $api_mode){
 				if($params['pix_logo']){
-					$result .= '<img style="width: 140px;margin: 18px 10px 0px 0px;" src="'.$ggpwhmcsurl.'/modules/gateways/gofasgalaxpay/assets/img/pix.png"></a>';
+					$result .= '<img style="width: 140px;margin: 18px 10px 0px 0px;" src="'.$ggppwhmcsurl.'/modules/gateways/gofasgalaxpaypix/assets/img/pix.png"></a>';
 				}
 				if($params['top_message']){
 					$result .= '<p style=" margin: 20px 0px 0px 0px; ">'.$params['top_message'].'</p>';
@@ -166,10 +166,10 @@ function gofasgalaxpaypix_link($params){
 					'x-platform: gofaspixparawhmcs',
 					'X-Api-Version: 2',
 					'X-Resource-Token: '.$private_token,
-					'X-Idempotency-Key: '.ggp_gen_uuid(),
+					'X-Idempotency-Key: '.ggpp_gen_uuid(),
 					'Authorization: Bearer '.$access_token,
 				];
-				$customer = ggp_customer($params['clientdetails']['id']);
+				$customer = ggpp_customer($params['clientdetails']['id']);
 				$qr_code_request = [
 					"charge"=>[
 						"pixKey"=> $pix_key,
@@ -195,7 +195,7 @@ function gofasgalaxpaypix_link($params){
 				$log['qr_code_request'] = $qr_code_request;
 				$log['header'] = $header;
 				$url=$charge_url.'charges';
-				$qr_code_ = ggp_charge($url,$access_token,$private_token,$header,$qr_code_request);
+				$qr_code_ = ggpp_charge($url,$access_token,$private_token,$header,$qr_code_request);
 				if($qr_code_['error']){
 					$error .= $qr_code_['details']['0']['message'];
 				}
@@ -207,19 +207,19 @@ function gofasgalaxpaypix_link($params){
 					$log['payloadInBase64'] = $payloadInBase64;
 					
 					if(!$saved_qr_code['imageInBase64'] || !$saved_qr_code['payloadInBase64']){
-						$save_qrc = ggp_save_qrc($qr_code,$params['invoiceid'],$params['amount'],$params['clientdetails']['client_id'],$api_mode);
+						$save_qrc = ggpp_save_qrc($qr_code,$params['invoiceid'],$params['amount'],$params['clientdetails']['client_id'],$api_mode);
 						if($save_qrc !== 'success'){
 							$error .= $save_qrc;
 						}
 					}
 					if($saved_qr_code['imageInBase64']){
-						$update_qrc = ggp_update_qrc($qr_code,$params['invoiceid'],$params['amount'],$params['clientdetails']['client_id'],$api_mode);
+						$update_qrc = ggpp_update_qrc($qr_code,$params['invoiceid'],$params['amount'],$params['clientdetails']['client_id'],$api_mode);
 						if($update_qrc !== 'success'){
 							$error .= $update_qrc;
 						}
 					}
 					if($params['pix_logo']){
-						$result .= '<img style="width: 140px;margin: 18px 10px 0px 0px;" src="'.$ggpwhmcsurl.'/modules/gateways/gofasgalaxpay/assets/img/pix.png"></a>';
+						$result .= '<img style="width: 140px;margin: 18px 10px 0px 0px;" src="'.$ggppwhmcsurl.'/modules/gateways/gofasgalaxpaypix/assets/img/pix.png"></a>';
 					}
 					if(!$params['top_message']){
 						$result .= '<p style=" margin: 20px 0px 0px 0px; ">Pague escaneando o QR code<br>ou copiando e colando a chave</p>';
@@ -243,10 +243,10 @@ function gofasgalaxpaypix_link($params){
 		    	$result = '<b style="color:red;">Erro: '.$error.'</b>';
 			}
 			if($params['log']){
-				foreach( Capsule::table('tblconfiguration') -> where('setting','=','ggp_version') -> get(['value']) as $ggp_version_ ){
-					$ggp_version			= $ggp_version_->value;
+				foreach( Capsule::table('tblconfiguration') -> where('setting','=','ggpp_version') -> get(['value']) as $ggpp_version_ ){
+					$ggpp_version			= $ggpp_version_->value;
 				}
-				logModuleCall('gofasgalaxpay','gofasgalaxpay_link',array('module_version'=>$ggp_version,),'', $log );
+				logModuleCall('gofasgalaxpaypix','gofasgalaxpaypix_link',array('module_version'=>$ggpp_version,),'', $log );
 				//echo '<pre>',$url,'<br>',print_r($log),'</pre>';
 			}
 			return $result;

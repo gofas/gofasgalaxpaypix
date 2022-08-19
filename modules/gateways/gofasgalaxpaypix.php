@@ -7,4 +7,4 @@
  * @support		https://gofas.net/?p=12349
  * @version		0.1.0
  */
-require __DIR__.'/gofasgalaxpay/index.php';
+require __DIR__.'/gofasgalaxpaypix/index.php';

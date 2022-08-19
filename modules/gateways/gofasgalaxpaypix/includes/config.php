@@ -1,6 +1,6 @@
 <?php
 /**
- * Módulo Galax Pay para WHMCS
+ * Módulo GalaxPay Pix para WHMCS
  * @copyright	2022 Gofas Software
  * @see			https://gofas.net/?p=14641
  * @license		https://gofas.net/?p=9340
@@ -10,65 +10,27 @@
 
 if( !defined('WHMCS')){ die(''); }
 use WHMCS\Database\Capsule;
-function gofasgalaxpay_MetaData(){
+function gofasgalaxpaypix_MetaData(){
     return array(
-        'DisplayName' => 'Gofas Galax Pay',
+        'DisplayName' => 'Gofas GalaxPay - Pix',
         'APIVersion' => '1.1',
     );
 }
-function gofasgalaxpaycard_config(){
-	$renderize = ['FriendlyName' => [
-			'Type' => 'System',
-			'Value' => 'Gofas Galax Pay - Cartão',
-		],
-	];
-	return $renderize;
-}
-function gofasgalaxpaybillet_config(){
-	$renderize = ['FriendlyName' => [
-		'Type' => 'System',
-		'Value' => 'Gofas Galax Pay - Boleto',
-	],
-];
-return $renderize;
-}
 function gofasgalaxpaypix_config(){
-	$renderize = ['FriendlyName' => [
-		'Type' => 'System',
-		'Value' => 'Gofas Galax Pay - Pix',
-	],
-];
-return $renderize;
-}
-function gofasgalaxpay_config(){
 	$module_version = '0.1.0';
 	$module_version_int = (int)preg_replace("/[^0-9]/", "", $module_version);
-	if( !function_exists('ggp_verifyInstall') ){
-	function ggp_verifyInstall(){
-		if( !Capsule::schema()->hasTable('gofasgalaxpay') ){
+	if( !function_exists('ggpp_verifyInstall') ){
+	function ggpp_verifyInstall(){
+		if( !Capsule::schema()->hasTable('gofasgalaxpaypix') ){
     		try {
-				Capsule::schema()->create('gofasgalaxpay', function($table){
-        			// card
-					$table->increments('id');
-					$table->string('api_mode');
-					$table->string('user_id');
-					$table->string('credit_card_id');
-					$table->string('pay_method_id');
-					$table->string('card_type');
-					$table->string('last_four');
-					// billet
-					$table->string('code');
-					$table->string('link');
-					$table->string('due_date');
-					$table->string('barcode_number');
-					$table->string('pay_number');
-					// pix
+				Capsule::schema()->create('gofasgalaxpaypix', function($table){
 					$table->string('invoice_id');
 					$table->string('charge_id');
 					$table->string('amount');
-					$table->string('qrc_id');
-					$table->text('qrc_in_base64');
-					$table->text('image_in_base64');
+					$table->text('reference');
+					$table->string('qrcode');
+					$table->text('image');
+					$table->string('api_mode');
 					$table->string('created_at');
 					$table->string('updated_at');
     			});
@@ -84,11 +46,10 @@ function gofasgalaxpay_config(){
 			return array('error'=>$error);
 		}
 	}}
-	$verifyInstall = ggp_verifyInstall();
+	$verifyInstall = ggpp_verifyInstall();
 	if($verifyInstall['error']){
 		$error = $verifyInstall['error'];
 	}
-	
 	$actual_link		= (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 	if( stripos( $actual_link, '/configgateways.php') ){
 		$whmcs_url__ = str_replace("\\",'/',(isset($_SERVER['HTTPS']) ? "https://" : "http://").$_SERVER['HTTP_HOST'].substr(getcwd(),strlen($_SERVER['DOCUMENT_ROOT'])));
@@ -96,41 +57,49 @@ function gofasgalaxpay_config(){
 		$vtokens = explode('/', $actual_link);
 		$whmcs_admin_path = '/'.$vtokens[sizeof($vtokens)-2].'/';
 		$whmcs_url = str_replace( $whmcs_admin_path, '', $admin_url).'/';
-		foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggpwhmcsurl') -> get( array( 'value','created_at') ) as $ggpwhmcsurl_ ){
-			$ggpwhmcsurl					= $ggpwhmcsurl_->value;
-			$ggpwhmcsurl_created_at			= $ggpwhmcsurl_->created_at;
+		foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggppwhmcsurl') -> get( array( 'value','created_at') ) as $ggppwhmcsurl_ ){
+			$ggppwhmcsurl					= $ggppwhmcsurl_->value;
+			$ggppwhmcsurl_created_at			= $ggppwhmcsurl_->created_at;
 		}
-		foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggpwhmcsadminurl') -> get( array( 'value','created_at') ) as $ggpwhmcsadminurl_ ){
-			$ggpwhmcsadminurl				= $ggpwhmcsadminurl_->value;
-			$ggpwhmcsadminurl_created_at	= $ggpwhmcsurl_->created_at;
+		foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggppwhmcsadminurl') -> get( array( 'value','created_at') ) as $ggppwhmcsadminurl_ ){
+			$ggppwhmcsadminurl				= $ggppwhmcsadminurl_->value;
+			$ggppwhmcsadminurl_created_at	= $ggppwhmcsurl_->created_at;
 		}
-		foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggpwhmcsadminpath') -> get( array( 'value','created_at') ) as $ggpwhmcsadminpath_ ){
-			$ggpwhmcsadminpath				= $ggpwhmcsadminpath_->value;
-			$ggpwhmcsadminpath_created_at	= $ggpwhmcsurl_->created_at;
+		foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggppwhmcsadminpath') -> get( array( 'value','created_at') ) as $ggppwhmcsadminpath_ ){
+			$ggppwhmcsadminpath				= $ggppwhmcsadminpath_->value;
+			$ggppwhmcsadminpath_created_at	= $ggppwhmcsurl_->created_at;
 		}
-		if( !$ggpwhmcsurl ){
-			try { Capsule::table('tblconfiguration')->insert(array('setting' => 'ggpwhmcsurl', 'value' => $whmcs_url, 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
+		if( !$ggppwhmcsurl ){
+			try { Capsule::table('tblconfiguration')->insert(array('setting' => 'ggppwhmcsurl', 'value' => $whmcs_url, 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
 			catch (\Exception $e){ $e->getMessage(); }
-			try { Capsule::table('tblconfiguration')->insert(array('setting' => 'ggpwhmcsadminurl', 'value' => $admin_url, 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
+			try { Capsule::table('tblconfiguration')->insert(array('setting' => 'ggppwhmcsadminurl', 'value' => $admin_url, 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
 			catch (\Exception $e){ $e->getMessage(); }
-			try { Capsule::table('tblconfiguration')->insert(array('setting' => 'ggpwhmcsadminpath', 'value' => $whmcs_admin_path, 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
+			try { Capsule::table('tblconfiguration')->insert(array('setting' => 'ggppwhmcsadminpath', 'value' => $whmcs_admin_path, 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
 			catch (\Exception $e){ $e->getMessage(); }
 		}
-		if( $ggpwhmcsurl and ($whmcs_url !== $ggpwhmcsurl) ){
-			try { Capsule::table('tblconfiguration')->where( 'setting', 'ggpwhmcsurl')->update(array('value' => $whmcs_url, 'created_at' =>  $ggpwhmcsurl_created_at , 'updated_at' => date("Y-m-d H:i:s")));}
+		if( $ggppwhmcsurl and ($whmcs_url !== $ggppwhmcsurl) ){
+			try { Capsule::table('tblconfiguration')->where( 'setting', 'ggppwhmcsurl')->update(array('value' => $whmcs_url, 'created_at' =>  $ggppwhmcsurl_created_at , 'updated_at' => date("Y-m-d H:i:s")));}
 			catch (\Exception $e){$e->getMessage();}
 		}
-		if( $ggpwhmcsadminurl and ($admin_url !== $ggpwhmcsadminurl) ){
-			try { Capsule::table('tblconfiguration')->where( 'setting', 'ggpwhmcsadminurl')->update(array('value' => $admin_url, 'created_at' =>  $ggpwhmcsadminurl_created_at , 'updated_at' => date("Y-m-d H:i:s")));}
+		if( $ggppwhmcsadminurl and ($admin_url !== $ggppwhmcsadminurl) ){
+			try { Capsule::table('tblconfiguration')->where( 'setting', 'ggppwhmcsadminurl')->update(array('value' => $admin_url, 'created_at' =>  $ggppwhmcsadminurl_created_at , 'updated_at' => date("Y-m-d H:i:s")));}
 			catch (\Exception $e){$e->getMessage();}
 		}
-		if( $ggpwhmcsadminpath and ($whmcs_admin_path !== $ggpwhmcsadminpath) ){
-			try { Capsule::table('tblconfiguration')->where( 'setting', 'ggpwhmcsadminpath')->update(array('value' => $whmcs_admin_path, 'created_at' =>  $ggpwhmcsadminpath_created_at , 'updated_at' => date("Y-m-d H:i:s")));}
+		if( $ggppwhmcsadminpath and ($whmcs_admin_path !== $ggppwhmcsadminpath) ){
+			try { Capsule::table('tblconfiguration')->where( 'setting', 'ggppwhmcsadminpath')->update(array('value' => $whmcs_admin_path, 'created_at' =>  $ggppwhmcsadminpath_created_at , 'updated_at' => date("Y-m-d H:i:s")));}
+			catch (\Exception $e){$e->getMessage();}
+		}
+		if( !$ggpp_version ){
+			try { Capsule::table('tblconfiguration')->insert(array('setting' => 'ggpp_version', 'value' =>$module_version, 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
+			catch (\Exception $e){ $e->getMessage(); }
+		}
+		if( $ggpp_version and (string)$ggpp_version !== (string)$module_version){
+			try { Capsule::table('tblconfiguration')->where( 'setting', 'ggpp_version')->update(array('value' => $module_version, 'created_at' =>  $ggpp_version_created_at , 'updated_at' => date("Y-m-d H:i:s")));}
 			catch (\Exception $e){$e->getMessage();}
 		}
 	}
-	if( !function_exists('ggp_verify_module_updates') ){
-	function ggp_verify_module_updates($page_id, $referer,$module_version){
+	if( !function_exists('ggpp_verify_module_updates') ){
+	function ggpp_verify_module_updates($page_id, $referer,$module_version){
    		$query = 'https://gofas.net/br/updates/?software='.$page_id.'&referer='.$referer.'&version='.$module_version;
     	$curl = curl_init();
     	curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
@@ -145,7 +114,7 @@ function gofasgalaxpay_config(){
 			'result' => $result,
 		);
 	}}
-	$available_update_ = ggp_verify_module_updates('14641',$whmcs_url,$module_version);
+	$available_update_ = ggpp_verify_module_updates('14641',$whmcs_url,$module_version);
 	if( (int)$available_update_['http_status'] === 200 ){
 		$available_update = $available_update_['result'];
 		$available_update_int = (int)preg_replace("/[^0-9]/", "", $available_update);
@@ -180,60 +149,65 @@ function gofasgalaxpay_config(){
 	$renderize = array(
 		'FriendlyName' => array(
 			'Type' => 'System',
-			'Value' => 'Gofas Galax Pay',
+			'Value' => 'Gofas GalaxPay - Pix',
 		),
 		'separator_1' => array(
 			'Description' => '
-			<div class="ggp_separator" style="padding: 1px 15px 9px;">
-				<div style="width:158px; float: right; padding: 0px;">
-				<a target="_blank" href="https://gofas.net/ggp/"><img style=" width: 135px;margin: 0px 0px 15px 0px;" src="'.$whmcs_url.'/modules/gateways/gofasgalaxpay/assets/img/gofas_software.png"></a>
-					
-				<a target="_blank" href="https://app.galaxpay.com.br/abrir-conta?affiliateHash=34c8f0bb"><img style=" width: 150px;" src="'.$whmcs_url.'/modules/gateways/gofasgalaxpay/assets/img/galaxpay_logo.png"></a>
-
+			<div class="ggpc_separator" style="padding: 1px 15px 9px;">
+				<div style="float: right; padding: 0px;">
+				<a target="_blank" href="https://app.galaxpay.com.br/abrir-conta?affiliateHash=34c8f0bb"><img style=" width: 300px;" src="'.$whmcs_url.'/modules/gateways/gofasgalaxpaycartao/assets/img/gofasgalaxpaycartao.png"></a>
 				</div>
 				<div style="margin-left: 10px;">
-					<h4 style="padding-top: 5px;">Módulo Gofas Galax Pay para WHMCS v'.$module_version.'</h4>
+					<h4 style="padding-top: 5px;">Módulo Gofas GalaxPay - Pix para WHMCS v'.$module_version.'</h4>
 					'.$available_update_message.'
 					<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=14641#configuration">Documentação do módulo</a>.</p>
-					<p><a style="text-decoration:underline;" target="_blank" href="https://docs.galaxpay.com.br/">Documentação da API Galax Pay</a>.</p>
+					<p><a style="text-decoration:underline;" target="_blank" href="https://docs.galaxpay.com.br/">Documentação da API GalaxPay</a>.</p>
 					<p>Crie um <a style="text-decoration:underline;" target="_blank" href="'.$admin_url.'/configcustomfields.php">campo personalizado de cliente</a> para CPF e/ou CNPJ, ou se preferir, crie dois campos distintos, um campo apenas para CPF e outro campo para CNPJ. O módulo identifica os campos do perfil do cliente automaticamente.</p>
-					<p>Crie um <a style="text-decoration:underline;" target="_blank" href="'.$admin_url.'/configcustomfields.php">campo personalizado de cliente</a> para a data de nascimento. O módulo identifica os campos do perfil do cliente automaticamente.</p>
 				</div>
 			</div>',
 		),
+		'separator_2' => array(
+			'Description' => '<h2>Credenciais API - Produção</h3>',
+		),
 		// Secret Token
 		'galax_id' => array(
-			'FriendlyName' => $opt_num++.'- Galax ID<span class="ggp_required">*</span>',
+			'FriendlyName' => $opt_num++.'- Galax ID<span class="ggpc_required">*</span>',
 			'Type' => 'text',
 			'Size' => '50',
 			'Default' => '',
-			'Description' => '<span class="ggp_required_txt">(Obrigatório)</span> Galax ID | Produção. <a target="_blank" style="text-decoration:underline;" href="https://docs.galaxpay.com.br/suporte">Obter Galax ID</a>',
+			'Description' => '<span class="ggpc_required_txt">(Obrigatório)</span> Galax ID | Produção. <a target="_blank" style="text-decoration:underline;" href="https://docs.galaxpay.com.br/suporte">Obter Galax ID</a>',
 		),
 		'galax_hash' => array(
-			'FriendlyName' => $opt_num++.'- Galax Hash<span class="ggp_required">*</span>',
+			'FriendlyName' => $opt_num++.'- Galax Hash<span class="ggpc_required">*</span>',
 			'Type' => 'text',
 			'Size' => '50',
 			'Default' => '',
-			'Description' => '<span class="ggp_required_txt">(Obrigatório)</span> Galax Hash | Produção. <a target="_blank" style="text-decoration:underline;" href="https://docs.galaxpay.com.br/suporte">Obter Galax Hash</a>',
+			'Description' => '<span class="ggpc_required_txt">(Obrigatório)</span> Galax Hash | Produção. <a target="_blank" style="text-decoration:underline;" href="https://docs.galaxpay.com.br/suporte">Obter Galax Hash</a>',
 		),
-		// Sandbox Secret Token
+		'separator_3' => array(
+			'Description' => '<h2>Credenciais API - Testes</h2>',
+		),
 		'sandbox_galax_id' => array(
-			'FriendlyName' => $opt_num++.'- Sandbox Galax ID<span class="ggp_required">*</span>',
+			'FriendlyName' => $opt_num++.'- Sandbox Galax ID<span class="ggpc_required">*</span>',
 			'Type' => 'text',
 			'Size' => '50',
 			'Default' => '',
-			'Description' => '<span class="ggp_required_txt">(Obrigatório)</span> Galax ID | Testes. <a target="_blank" style="text-decoration:underline;" href="https://docs.galaxpay.com.br/autenticacao">Obter Galax ID</a>',
+			'Description' => '<span class="ggpc_required_txt">(Obrigatório)</span> Galax ID | Testes. <a target="_blank" style="text-decoration:underline;" href="https://docs.galaxpay.com.br/autenticacao">Obter Galax ID</a>',
 		),
 		// Sandbox Secret Token
 		'sandbox_galax_hash' => array(
-			'FriendlyName' => $opt_num++.'- Sandbox Galax Hash<span class="ggp_required">*</span>',
+			'FriendlyName' => $opt_num++.'- Sandbox Galax Hash<span class="ggpc_required">*</span>',
 			'Type' => 'text',
 			'Size' => '50',
 			'Default' => '',
-			'Description' => '<span class="ggp_required_txt">(Obrigatório)</span> Galax Hash | Testes. <a target="_blank" style="text-decoration:underline;" href="https://docs.galaxpay.com.br/autenticacao">Obter Galax Hash</a>',
+			'Description' => '<span class="ggpc_required_txt">(Obrigatório)</span> Galax Hash | Testes. <a target="_blank" style="text-decoration:underline;" href="https://docs.galaxpay.com.br/autenticacao">Obter Galax Hash</a>',
+		),
+		// All others settings
+		'separator_4' => array(
+			'Description' => '<h2>Configurações gerais</h2>',
 		),
 		'admin' => array(
-			'FriendlyName' => $opt_num++.'- Administrador do WHMCS<span class="ggp_required">*</span>',
+			'FriendlyName' => $opt_num++.'- Administrador do WHMCS<span class="ggpp_required">*</span>',
 			'Type'          => 'dropdown',
 			'Default' 		=> key(reset($tbladmins)),
             'Options'       => $tbladmins,
@@ -253,14 +227,6 @@ function gofasgalaxpay_config(){
 			'Default' => 'yes',
 			'Description' => 'Salva informações de diagnóstico em <a target="_blank" style="text-decoration: underline;" href="'.$admin_url.'/systemmodulelog.php">Utilitários > Logs > Log de Módulo</a>. Para funcionar, antes é necessário ativar o debug de módulo clicando em "Ativar Log de Debug". <a target="_blank" style="text-decoration: underline;" href="'.$admin_url.'/systemmodulelog.php">VER LOG</a>.',
 		),
-		// Notificar admin sobre erros
-		'emailonerror' => array(
-			'FriendlyName' => $opt_num++.'- Notificar admins',
-			'Type'          => 'dropdown',
-			'Default' 		=> '0',
-            'Options'       => $tblticketdepartments,
-			'Description' => 'Escolha o departamento de suporte que receberá notificação por email quando houver erros ao gerar cobranças',
-		),
 		// minimum amount
 		'minimunamount' => array(
 			'FriendlyName' => $opt_num++.'- Valor mínimo',
@@ -269,121 +235,13 @@ function gofasgalaxpay_config(){
 			'Default' => '5',
 			'Description' => 'Insira o valor total mínimo da fatura para permitir pagamento via Cartão. Formato: Decimal, separado por ponto. Maior ou igual a sua tarifa (a partir de 2.50) e menor ou igual a 1000000.00.',
 		),
-		///////////// 
-		'separator_1_2' => array(
-			'Description' => '
-			<div class="ggp_separator" style="padding: 1px 15px 9px;">
-				<h4>Tipos de cobrança</h4>
-				<p>Cartão de Crédito, Boleto Bancário e PIX. Cada opção ativada funciona e será exibida de forma independente, como se fossem módulos distintos.</p>
-			</div>',
-		),
-		// Card
-		'card' => array(
-			'FriendlyName' => $opt_num++.'- <i>Cartão</i>',
-			'Type' => 'yesno',
-			'Default' => 'yes',
-			'Description' => 'Ativar cobrança via Cartão de Crédito',
-		),
-		// Billet
-		'billet' => array(
-			'FriendlyName' => $opt_num++.'- <i>Boleto</i>',
-			'Type' => 'yesno',
-			'Default' => 'yes',
-			'Description' => 'Ativar cobrança via Boleto',
-		),
-		// Pix
-		'pix' => array(
-			'FriendlyName' => $opt_num++.'- <i>PIX</i>',
-			'Type' => 'yesno',
-			'Default' => 'yes',
-			'Description' => 'Ativar cobrança via PIX',
-		),
-		///////////// 
-		'separator_2' => array(
-			'Description' => '
-			<div class="ggp_separator" style="padding: 1px 15px 9px;">
-				<h4>Cartão de Crédito - Configurações</h4>
-			</div>',
-		),
-		// Permitir Parcelamento
-		'installments' => array(
-			'FriendlyName' => $opt_num++.'- Permitir parcelamento',
-			'Type' => 'yesno',
-			'Default' => 'yes',
-			'Description' => '<span class="ggp_optional_txt">(Opcional)</span> Com essa opção ativada seu cliente verá opções de parcelamento na fatura quando aplicável.',
-		),
-		// valor mínimo para parcelamento
-		'minimunamountinstallments' => array(
-			'FriendlyName' => $opt_num++.'- Valor mínimo para parcelamento',
+		// fee
+		'fee' => array(
+			'FriendlyName' => $opt_num++.'- Tarifa Pix',
 			'Type' => 'text',
 			'Size' => '10',
-			'Default' => '1000',
-			'Description' => '<span class="ggp_optional_txt">(Opcional)</span> Insira o valor mínimo da fatura para permitir Pagamento Parcelado.',
-		),
-		// máximo de parcelas
-        'maxinstallments' => array(
-            'FriendlyName' =>  $opt_num++.'- Máximo de parcelas',
-            'Type' => 'dropdown',
-			'Default' => '2',
-            'Options' => array(
-                '2' => 'Até 2 parcelas',
-                '3' => 'Até 3 parcelas',
-                '4' => 'Até 4 parcelas',
-				'5' => 'Até 5 parcelas',
-				'6' => 'Até 6 parcelas',
-				'7' => 'Até 7 parcelas',
-				'8' => 'Até 8 parcelas',
-				'9' => 'Até 9 parcelas',
-				'10' => 'Até 10 parcelas',
-				'11' => 'Até 11 parcelas',
-				'12' => 'Até 12 parcelas',
-            ),
-            'Description' => '<span class="ggp_optional_txt">(Opcional)</span> Selecione o número máximo de parcelas permitido.</span>',
-        ),
-		///////////// 
-		'separator_3' => array(
-			'Description' => '
-			<div class="ggp_separator" style="padding: 1px 15px 9px;">
-				<h4>Boleto Bancário - Configurações</h4>
-			</div>',
-		),
-		// Billet on email
-		'billetonemail' => array(
-			'FriendlyName' => $opt_num++.'- Informações do Boleto no email',
-			'Type' => 'yesno',
-			'Default' => 'yes',
-			'Description' => 'Adiciona link, linha digitável, vencimento e outras informações do boleto no corpo dos emails de faturas. Essa opção faz o módulo gerar os boletos no momento em que a fatura é gerada e enviada por email. Desative para gerar o boleto no 1º acesso à fatura. <a style="font-weight: bold;text-decoration:underline;" target="_blank" href="https://gofas.net/?p=11116#mergetags">Veja aqui a lista de tags disponíveis para os emails.</a> .',
-		),
-		
-		// Replace Invoice link for Billet link on email
-		'linkbilletonemail' => array(
-			'FriendlyName' => $opt_num++.'- Link direto para o Boleto no email',
-			'Type' => 'yesno',
-			//'Default' => 'yes',
-			'Description' => 'Substitui o URL da Fatura pelo URL do Boleto nos emails de "Nova Fatura" (tag <code>{$invoice_link}</code> do template de email <i>Invoice Created</i>).',
-		),
-		// Dias + vencimento
-		'daysfordue' => array(
-            'FriendlyName'      => $opt_num++.'- Dias adicionais para novo vencimento',
-            'Type'              => 'text',
-			'Size'				=> '10',
-			'Default' 			=> '2',
-            'Description'       => 'Número de dias que serão somados a data do vencimento do Boleto, ao gerar segunda via do boleto ou quando o cliente acessa uma fatura vencida. Essa opção aplica-se apenas a Faturas vencidas, faturas que ainda não venceram sempre irão gerar Boletos com a mesma data de vencimento da Fatura. As configurações de juros e multa anulam essa configuração.',
-        ),
-		// Número máximo de dias que o boleto poderá ser pago após o vencimento
-		'maxoverduedays' => array(
-            'FriendlyName'      => $opt_num++.'- Máximo de dias para o pagamento',
-            'Type'              => 'text',
-			'Size'				=> '10',
-			'Default' 			=> '29',
-            'Description'       => 'Número máximo de dias que o boleto poderá ser pago após o vencimento. Zero significa que o boleto não poderá ser pago após o vencimento. Formato: Número inteiro maior ou igual a 0 e menor ou igual a 29',
-        ),
-		///////////// 
-		'separator_4' => array(
-			'Description' => '
-			<div class="ggp_separator" style="padding: 1px 15px 9px;">
-				<h4>PIX - Configurações</h4>
-			</div>',
+			'Default' => '0.99',
+			'Description' => 'Insira o valor da tarifa paga à GalaxPay por cada Pix recebido. Formato: Decimal, separado por ponto (0.99)',
 		),
 		// top message
 		'top_message' => array(
@@ -416,7 +274,7 @@ function gofasgalaxpay_config(){
 		),
 	);
 	$footer = array('footer' => array(
-			'Description' => '<div class="ggp_section">
+			'Description' => '<div class="ggpp_section">
 			<p>&copy; '.date('Y').' <a style="text-decoration:underline;" target="_blank" title="↗ Gofas.net" href="https://gofas.net">Gofas.net</a> | <a style="text-decoration:underline;" target="_blank" title="↗ Gofas.net" href="https://gofas.net/?p=14641#changelog">'.$module_version.'</a> | <a  style="text-decoration:underline;"target="_blank" title="↗ Documentação" href="https://gofas.net/?p=14641">Documentação</a> | <a style="text-decoration:underline;" target="_blank" title="↗ Fórum de Suporte" href="https://gofas.net/foruns/">Suporte</a>.</p>
 			<p style="font-size: 11px;">
 			Ao utilizar esse módulo você concorda com nosso <a style="text-decoration:underline;" target="_blank" title="↗ Contrato de licença de uso de software" href="https://gofas.net/?p=9340">contrato de licença de uso de software</a>.
