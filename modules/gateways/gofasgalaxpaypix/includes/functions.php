@@ -2,9 +2,9 @@
 /**
  * Módulo GalaxPay Pix para WHMCS
  * @copyright	2022 Gofas Software
- * @see			https://gofas.net/?p=14641
+ * @see			https://gofas.net/?p=14685
  * @license		https://gofas.net/?p=9340
- * @support		https://gofas.net/?p=14644
+ * @support		https://gofas.net/?p=14690
  * @version		0.1.0
  */
 require_once __DIR__ . '/../../../../init.php';
@@ -12,20 +12,6 @@ require_once __DIR__ . '/../../../../includes/gatewayfunctions.php';
 require_once __DIR__ . '/../../../../includes/invoicefunctions.php';
 if(!defined("WHMCS")){die();}
 use WHMCS\Database\Capsule;
-if(!function_exists('ggpp_version')){
-	function ggpp_version($int=false){
-		foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggpp_version') -> get( array( 'value','created_at') ) as $ggpp_version_ ){
-			$ggpp_version				= $ggpp_version_->value;
-			$ggpp_version_created_at	= $ggpp_version_->created_at;
-		}
-		if(!$int){
-			return $ggpp_version;
-		}
-		if($int){
-			return (int)preg_replace("/[^0-9]/", "", $ggpp_version);
-		}
-	}
-}
 if(!function_exists('ggpp_api_connect')){
 	function ggpp_api_connect(){
 		$params = getGatewayVariables('gofasgalaxpaycartao');
@@ -110,14 +96,14 @@ if( !function_exists('ggpp_charge') ){
 	}
 }
 if( !function_exists('ggpp_charge_verify') ){
-	function ggpp_charge_verify($postfields){
+	function ggpp_charge_verify($charge_id){
 		$params_api = ggpp_api_connect();
 		$curl = curl_init();
 		$access_token_ = ggpp_get_token();
 		$access_token = $access_token_['result']['access_token'];
 
 		curl_setopt_array($curl, array(
-			CURLOPT_URL => $params_api['charge_url'].'/transactions?galaxPayIds='.$postfields['galaxPayIds'].'&limit=1&startAt=0',
+			CURLOPT_URL => $params_api['charge_url'].'/transactions?galaxPayIds='.$charge_id.'&limit=1&order=createdAt.desc&startAt=0',
 			CURLOPT_RETURNTRANSFER => true,
 			CURLOPT_ENCODING => '',
 			CURLOPT_MAXREDIRS => 10,
@@ -136,8 +122,10 @@ if( !function_exists('ggpp_charge_verify') ){
 	}
 }
 if( !function_exists('ggpp_refund') ){
-	function ggpp_refund($charge_id,$access_token){
+	function ggpp_refund($charge_id){
 		$params_api = ggpp_api_connect();
+		$access_token_ = ggpp_get_token();
+		$access_token = $access_token_['result']['access_token'];
 		$curl = curl_init();
 		curl_setopt_array($curl, array(
 			CURLOPT_URL => $params_api['charge_url'].'/charges/'.$charge_id.'/galaxPayId/reverse',
@@ -399,5 +387,224 @@ if( !function_exists('ggpp_get_local_qrc') ){
 			$qrc_for_invoice[$key] = json_decode(json_encode($value), true);
 		}
 		return $qrc_for_invoice['0'];
+	}
+}
+if( !function_exists('ggpp_verify_install') ){
+	function ggpp_verify_install(){
+		if( !Capsule::schema()->hasTable('gofasgalaxpaypix') ){
+			try {
+				Capsule::schema()->create('gofasgalaxpaypix', function($table){
+					$table->string('invoice_id');
+					$table->string('charge_id');
+					$table->string('amount');
+					$table->text('reference');
+					$table->string('qrcode');
+					$table->text('image');
+					$table->string('api_mode');
+					$table->string('created_at');
+					$table->string('updated_at');
+				});
+			}
+			catch (\Exception $e){
+				$error .= "Não foi possível criar a tabela do módulo no banco de dados: {$e->getMessage()}";
+			}
+		}
+		if(!$error){
+			return array('sucess'=>1);
+		}
+		elseif($error){
+			return array('error'=>$error);
+		}
+	}
+}
+// Admin functions
+if( !function_exists('ggpp_whmcs_url') ){
+	function ggpp_whmcs_url(){
+		$url		= (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+		if( stripos( $url, '/configgateways.php') !== false){
+			$whmcs_url__ = str_replace("\\",'/',(isset($_SERVER['HTTPS']) ? "https://" : "http://").$_SERVER['HTTP_HOST'].substr(getcwd(),strlen($_SERVER['DOCUMENT_ROOT'])));
+			$admin_url = $whmcs_url__.'/';
+			$vtokens = explode('/', $url);
+			$whmcs_admin_path = '/'.$vtokens[sizeof($vtokens)-2].'/';
+			$whmcs_url = str_replace( $whmcs_admin_path, '', $admin_url).'/';
+			foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggppwhmcsurl') -> get( array( 'value','created_at') ) as $ggppwhmcsurl_ ){
+				$ggppwhmcsurl					= $ggppwhmcsurl_->value;
+				$ggppwhmcsurl_created_at			= $ggppwhmcsurl_->created_at;
+			}
+			foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggppwhmcsadminurl') -> get( array( 'value','created_at') ) as $ggppwhmcsadminurl_ ){
+				$ggppwhmcsadminurl				= $ggppwhmcsadminurl_->value;
+				$ggppwhmcsadminurl_created_at	= $ggppwhmcsurl_->created_at;
+			}
+			foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggppwhmcsadminpath') -> get( array( 'value','created_at') ) as $ggppwhmcsadminpath_ ){
+				$ggppwhmcsadminpath				= $ggppwhmcsadminpath_->value;
+				$ggppwhmcsadminpath_created_at	= $ggppwhmcsurl_->created_at;
+			}
+			if( !$ggppwhmcsurl ){
+				try { Capsule::table('tblconfiguration')->insert(array('setting' => 'ggppwhmcsurl', 'value' => $whmcs_url, 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
+				catch (\Exception $e){ $e->getMessage(); }
+				try { Capsule::table('tblconfiguration')->insert(array('setting' => 'ggppwhmcsadminurl', 'value' => $admin_url, 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
+				catch (\Exception $e){ $e->getMessage(); }
+				try { Capsule::table('tblconfiguration')->insert(array('setting' => 'ggppwhmcsadminpath', 'value' => $whmcs_admin_path, 'created_at' => date("Y-m-d H:i:s") , 'updated_at' => date("Y-m-d H:i:s")));}
+				catch (\Exception $e){ $e->getMessage(); }
+			}
+			if( $ggppwhmcsurl and ($whmcs_url !== $ggppwhmcsurl) ){
+				try { Capsule::table('tblconfiguration')->where( 'setting', 'ggppwhmcsurl')->update(array('value' => $whmcs_url, 'created_at' =>  $ggppwhmcsurl_created_at , 'updated_at' => date("Y-m-d H:i:s")));}
+				catch (\Exception $e){$e->getMessage();}
+			}
+			if( $ggppwhmcsadminurl and ($admin_url !== $ggppwhmcsadminurl) ){
+				try { Capsule::table('tblconfiguration')->where( 'setting', 'ggppwhmcsadminurl')->update(array('value' => $admin_url, 'created_at' =>  $ggppwhmcsadminurl_created_at , 'updated_at' => date("Y-m-d H:i:s")));}
+				catch (\Exception $e){$e->getMessage();}
+			}
+			if( $ggppwhmcsadminpath and ($whmcs_admin_path !== $ggppwhmcsadminpath) ){
+				try { Capsule::table('tblconfiguration')->where( 'setting', 'ggppwhmcsadminpath')->update(array('value' => $whmcs_admin_path, 'created_at' =>  $ggppwhmcsadminpath_created_at , 'updated_at' => date("Y-m-d H:i:s")));}
+				catch (\Exception $e){$e->getMessage();}
+			}
+
+		}
+		return ['url'=>$whmcs_url,'admin_url'=>$admin_url,'admin_path'=>$whmcs_admin_path];
+	}
+}
+if( !function_exists('ggpp_get_version') ){
+	function ggpp_get_version($page_id,$referer,$module_version){
+		$query = 'https://gofas.net/br/updates/?software='.$page_id.'&referer='.$referer.'&version='.$module_version;
+		$curl = curl_init();
+		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($curl, CURLOPT_URL, $query);
+		$available_version = curl_exec($curl);
+		$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		curl_close($curl);
+		return ['version'=>$available_version,'http_code'=>$http_status];
+	}
+}
+if( !function_exists('ggpp_verify_module_updates') ){
+	function ggpp_verify_module_updates($page_id,$referer,$module_version){
+		foreach( Capsule::table('tblconfiguration')->where('setting','=','ggpp_version')->get(['value','created_at','updated_at']) as $version_ ){
+			$version		= json_decode($version_->value, true);
+			$local_version	= $version['local_version'];
+			$last_version	= $version['last_version'];
+			$created_at		= $version_->created_at;
+			$updated_at		= $version_->updated_at;
+			//$available_version	= (int)preg_replace("/[^0-9]/","",$version['last_version']);
+		}
+		///// Get
+		if(!$version){
+			$get_version = ggpp_get_version($page_id,$referer,$module_version);
+			if((int)$get_version['http_code'] !== 200){
+				$error .= $get_version['http_code'].' '.$get_version['version'];
+			}
+			else{
+				$available_version = $get_version['version'];
+			}
+		}
+		if($version and strtotime($updated_at) < strtotime("-1 day")){
+			$get_version = ggpp_get_version($page_id,$referer,$module_version);
+			if((int)$get_version['http_code'] !== 200){
+				$error .= $get_version['http_code'].' '.$get_version['version'];
+			}
+			else{
+				$available_version = $get_version['version'];
+			}
+		}
+		if($version and strtotime($updated_at) > strtotime("-1 day")){
+			$available_version = $last_version;
+		}
+		// insert
+		if(!$version and $get_version['version']){
+			$local_version = $module_version;
+			$last_version = $get_version['version'];
+			$created_at		= date("Y-m-d H:i:s");
+			$updated_at		= date("Y-m-d H:i:s");
+
+			try { Capsule::table('tblconfiguration')->insert(array(
+				'setting' => 'ggpp_version',
+				'value' => json_encode([
+					'local_version'=>$module_version,
+					'last_version'=>$get_version['version']
+				]),
+				'created_at' => $created_at,
+				'updated_at' => $updated_at
+			));
+			}
+			catch (\Exception $e){
+				$error .= $e->getMessage();
+			}
+		}
+		// update
+		if($version and $get_version['version'] and strtotime($updated_at) < strtotime("-1 day") and (
+			$available_version !== $module_version ||
+			$local_version !== $module_version ||
+			$last_version !== $available_version
+		)){
+			try {
+				Capsule::table('tblconfiguration')->where('setting','ggpp_version')->update([
+					'value' => json_encode([
+						'local_version'=>$module_version,
+						'last_version'=>$available_version
+					]),
+					'created_at' =>  $created_at,
+					'updated_at' => date("Y-m-d H:i:s")]
+				);
+			}
+			catch (\Exception $e){
+				$error .= $e->getMessage();
+			}
+		}
+		$module_version_int = (int)preg_replace("/[^0-9]/", "", $module_version);
+		$available_version_int = (int)preg_replace("/[^0-9]/", "", $available_version);
+		if( $available_version_int === $module_version_int ){
+			$message = '<p style="color: green"><i class="fas fa-check-square"></i> Você está executando a versão mais recente do módulo.</p>';
+		}
+		if( $available_version_int > $module_version_int ){
+			$message = '<p style="font-size: 14px; color: red;"><i class="fas fa-exclamation-triangle"></i> Atualização disponível, verifique a <a style="color:#CC0000;text-decoration:underline;" href="https://gofas.net/?p='.$page_id.'" target="_blank">versão '.$available_version.'</a>';
+		}
+		if( $available_version_int < $module_version_int ){
+			$message = '<p style="font-size: 14px; color: orange;"><i class="fas fa-exclamation-triangle"></i> Você está executando uma versão Beta desse módulo.<br>Baixar versão estável: <a style="color:#CC0000;text-decoration:underline;" href="https://gofas.net/?p='.$page_id.'" target="_blank">v'.$available_version.'</a>';
+		}
+		return [
+			'version'=>$version,
+			'get_version'=>$get_version,
+			'message' => $message,
+			'error' => $error,
+		];
+	}
+}
+if(!function_exists('ggpp_version')){
+	function ggpp_version($opt=1){
+		foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggpp_version') -> get( array( 'value','created_at') ) as $ggpp_version_ ){
+			$ggpp_version				= $ggpp_version_->value;
+			$ggpp_version_created_at	= $ggpp_version_->created_at;
+		}
+		if($opt=1){ // local_version string
+			$version = json_decode($ggpp_version, true);
+			return $version['local_version'];
+		}
+		if($opt=2){ // local_version integer
+			$version = json_decode($ggpp_version, true);
+			return (int)preg_replace("/[^0-9]/", "", $version['local_version']);
+		}
+		if($opt=3){ // full
+			return$ggpp_version;
+		}
+	}
+}
+if(!function_exists('ggpp_tbladmins')){
+	function ggpp_tbladmins(){
+		foreach( Capsule::table('tbladmins') -> get() as $tbladmins_ ){
+			$tbladmins[$tbladmins_->id] = $tbladmins_->id.' - '.$tbladmins_->firstname.' '.$tbladmins_->lastname.' ('.$tbladmins_->username.')';
+		}
+		return $tbladmins;
+	}
+}
+if(!function_exists('ggpp_tblticketdepartments')){
+	function ggpp_tblticketdepartments(){
+		$tblticketdepartments[] = '';
+		foreach( Capsule::table('tblticketdepartments') -> get() as $tblticketdepartments_ ){
+			$tblticketdepartments_id			= $tblticketdepartments_->id;
+			$tblticketdepartments_name			= $tblticketdepartments_->name;
+			$tblticketdepartments[]				= $tblticketdepartments_id.' - '.$tblticketdepartments_name;
+		}
+		return $tblticketdepartments;
 	}
 }

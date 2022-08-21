@@ -2,22 +2,49 @@
 /**
  * Módulo GalaxPay Pix para WHMCS
  * @copyright	2022 Gofas Software
- * @see			https://gofas.net/?p=14641
+ * @see			https://gofas.net/?p=14685
  * @license		https://gofas.net/?p=9340
- * @support		https://gofas.net/?p=14644
+ * @support		https://gofas.net/?p=14690
  * @version		0.1.0
  */
+
 use WHMCS\Database\Capsule;
+//require __DIR__.'/includes/cron.php';
+require __DIR__.'/includes/hooks.php';
 require_once __DIR__.'/includes/config.php';
 function gofasgalaxpaypix_link($params){
 	if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice.php') !== false ){
 		require __DIR__.'/includes/functions.php';
 		$log['params'] = $params;
 		if($params['amount'] >= $params['minimunamount']){
+			$access_token_ = ggpp_get_token();
+			$access_token = $access_token_['result']['access_token'];
+			if($access_token_['result']['access_token']){
+				 $access_token = $access_token_['result']['access_token'];
+			 }
+			 else{
+				 $error .= $access_token_['response_code'].': '.json_encode($access_token_['result']);
+			}
+			$log['access_token_'] = $access_token_;
+				
 			foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggppwhmcsurl') -> get( array( 'value','created_at') ) as $ggppwhmcsurl_ ){
 				$ggppwhmcsurl					= $ggppwhmcsurl_->value;
 			}
-			$result .= '<script type="text/javascript" src="'.$ggppwhmcsurl.'modules/gateways/gofasgalaxpaypix/assets/js/copy2clipboard.js" charset="UTF-8"></script>';
+			$result .= '<script>
+			function copy_tooltip() {
+				var copyText = document.getElementById("qrcodeforcopy");
+				copyText.select();
+				copyText.setSelectionRange(0, 99999);
+				navigator.clipboard.writeText(copyText.value);
+				var tooltip = document.getElementById("copy_tooltip");
+				tooltip.innerHTML = "Código copiado!"; //"Copied: " + copyText.value;
+			  }
+			  function outFunc() {
+				var tooltip = document.getElementById("copy_tooltip");
+				//tooltip.innerHTML = "Clique aqui para copiar";
+				setTimeout(function(){ tooltip.innerHTML = "Clique aqui para copiar"; }, 1000);
+			  }
+			</script>';
 			$result .= '<script type="text/javascript" src="'.$ggppwhmcsurl.'modules/gateways/gofasgalaxpaypix/assets/js/scripts.js" charset="UTF-8"></script>';
 			$result .= '<input type="hidden" id="system_url" value="'.$ggppwhmcsurl.'">';
 			$result .= '<input type="hidden" id="invoice_id" value="'.$params['invoiceid'].'">';
@@ -33,8 +60,8 @@ function gofasgalaxpaypix_link($params){
 					$result .= '<p style=" margin: 20px 0px 0px 0px; ">'.$params['top_message'].'</p>';
 				}
 				$result .= '<img style="width: 100%; max-width: 255px;" src="'. $saved_qr_code['image'].'" /><br>';
-				$result .= '<p id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;margin: -60px 0px 60px 0px;">'.$saved_qr_code['qrcode'].'</p>';
-				$button_func = "document.getElementById('qrcodeforcopy')";
+				$result .= '<input value="'.$saved_qr_code['qrcode'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
+				//$button_func = "document.getElementById('qrcodeforcopy')";
 				if($params['show_date']){
 					$result .= '<p style=" margin: 0px 0px 10px 0px; ">Gerado em '.date('d/m/Y à\s H:i:s',strtotime($saved_qr_code['updated_at'])).'</p>';
 				}
@@ -42,21 +69,11 @@ function gofasgalaxpaypix_link($params){
 					$result .= '<p style=" margin: -10px 0px 10px 0px; ">Total: R$ '.number_format( $params['amount'],  2, ',', '.').'</p>';
 				}
 				
-				$result .= '<button id="copy_tooltip" class="btn btn-default" onclick="select_all_and_copy('.$button_func.')">Clique aqui para copiar</button>';
+				$result .= '<button style="position: relative; display: inline-block;"  id="copy_tooltip" class="btn btn-default" onclick="copy_tooltip()" onmouseout="outFunc()">Clique aqui para copiar</button>';
 				$log['saved_qr_code'] = $saved_qr_code;
 			}
 			if(!$saved_qr_code['image'] || !$saved_qr_code['qrcode'] || (float)($saved_qr_code['amount']/100) !== (float)$params['amount'] || $saved_qr_code['api_mode'] !== $params_api['api_mode']){
 				
-				$access_token_ = ggpp_get_token();
-				$access_token = $access_token_['result']['access_token'];
-
-				 if($access_token_['result']['access_token']){
-					 $access_token = $access_token_['result']['access_token'];
-				 }
-				 else{
-					 $error .= $access_token_['response_code'].': '.json_encode($access_token_['result']);
-				}
-				$log['access_token_'] = $access_token_;
 				$amount = ((int)$params['amount'])*100;
 				$postfields = array(
 					'access_token'=> $access_token,
@@ -143,15 +160,15 @@ function gofasgalaxpaypix_link($params){
 						$result .= '<p style=" margin: 20px 0px 0px 0px; ">'.$params['top_message'].'</p>';
 					}
 					$result .= '<img style="width: 100%; max-width: 255px;" src="'.$qr_code_['result']['Charge']['Transactions']['0']['Pix']['image'].'" /><br>';
-					$result .= '<p id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;margin: -60px 0px 60px 0px;">'.$qr_code_['result']['Charge']['Transactions']['0']['Pix']['qrCode'].'</p>';
-					$button_func = "document.getElementById('qrcodeforcopy')";
+					$result .= '<input value="'.$saved_qr_code['qrcode'].'" id="qrcodeforcopy" style="width: 0px;height: 0px;font-size: 0px;padding: 0px;display:none;">';
+					//$button_func = "document.getElementById('qrcodeforcopy')";
 					if($params['show_date']){
 						$result .= '<p style=" margin: 0px 0px 10px 0px; ">Gerado em '.date('d/m/Y à\s H:i:s',strtotime(date("Y-m-d H:i:s"))).'</p>';
 					}
 					if($params['show_total']){
 						$result .= '<p style=" margin: -10px 0px 10px 0px; ">Total: R$ '.number_format( $params['amount'],  2, ',', '.').'</p>';
 					}
-					$result .= '<button class="btn btn-default" onclick="select_all_and_copy('.$button_func.')">Clique aqui para copiar</button>';
+					$result .= '<button style="position: relative; display: inline-block;"  id="copy_tooltip" class="btn btn-default" onclick="copy_tooltip()" onmouseout="outFunc()">Clique aqui para copiar</button>';
 				}
 			}
 			if($error){
@@ -172,14 +189,14 @@ function gofasgalaxpaypix_link($params){
 		}
 	}
 }
-/*
+
 function gofasgalaxpaypix_refund($params){
-	require_once __DIR__.'/functions.php';
+	require_once __DIR__.'/includes/functions.php';
 	$params_api = ggpp_api_connect();
 	$access_token_ = ggpp_get_token();
 	$access_token = $access_token_['result']['access_token'];
 	$charge_id = ggpp_get_string_between($params['transid'], 'ggpp-', '-'.$params_api['api_mode']);
-	$refund = ggpp_refund($charge_id,$access_token);
+	$refund = ggpp_refund($charge_id);
 
 	$GetTransactions = localAPI('GetTransactions',array('transid' => $params['transid']), (int)$params['admin']);
 	$dt = new DateTime($GetTransactions['transactions']['transaction']['0']['date']);
@@ -209,4 +226,3 @@ function gofasgalaxpaypix_refund($params){
     	);
 	}
 }
-*/
