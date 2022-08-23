@@ -507,6 +507,15 @@ if( !function_exists('ggpp_verify_module_updates') ){
 				$available_version = $get_version['version'];
 			}
 		}
+		if($version and (string)$module_version !== (string)$local_version){
+			$get_version = ggpp_get_version($page_id,$referer,$module_version);
+			if((int)$get_version['http_code'] !== 200){
+				$error .= $get_version['http_code'].' '.$get_version['version'];
+			}
+			else{
+				$available_version = $get_version['version'];
+			}
+		}
 		if($version and strtotime($updated_at) > strtotime("-1 day")){
 			$available_version = $last_version;
 		}
@@ -551,6 +560,22 @@ if( !function_exists('ggpp_verify_module_updates') ){
 				$error .= $e->getMessage();
 			}
 		}
+		// update
+		if($version and $get_version['version'] and (string)$local_version !== (string)$module_version){
+			try {
+				Capsule::table('tblconfiguration')->where('setting','ggpp_version')->update([
+					'value' => json_encode([
+						'local_version'=>$module_version,
+						'last_version'=>$available_version
+					]),
+					'created_at' =>  $created_at,
+					'updated_at' => date("Y-m-d H:i:s")]
+				);
+			}
+			catch (\Exception $e){
+				$error .= $e->getMessage();
+			}
+		}
 		$module_version_int = (int)preg_replace("/[^0-9]/", "", $module_version);
 		$available_version_int = (int)preg_replace("/[^0-9]/", "", $available_version);
 		if( $available_version_int === $module_version_int ){
@@ -568,6 +593,20 @@ if( !function_exists('ggpp_verify_module_updates') ){
 			'message' => $message,
 			'error' => $error,
 		];
+	}
+}
+if( !function_exists('ggpp_get_embed') ){
+	function ggpp_get_embed($page_id,$referer,$module_version){
+		$query = 'https://gofas.net/cliente/gofas/updates/?embed='.$page_id.'&referer='.$referer.'&version='.$module_version;
+		$curl = curl_init();
+		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($curl, CURLOPT_URL, $query);
+		$embed = curl_exec($curl);
+		$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		curl_close($curl);
+		return ['embed'=>$embed,'http_code'=>$http_status];
 	}
 }
 if(!function_exists('ggpp_version')){
