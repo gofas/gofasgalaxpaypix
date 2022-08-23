@@ -52,7 +52,12 @@ function gofasgalaxpaypix_link($params){
 			$customer = ggpp_customer($params['clientdetails']['id']);
 
 			$saved_qr_code = ggpp_get_local_qrc($params['invoiceid']);
-			if($saved_qr_code['image'] and (float)($saved_qr_code['amount']/100) === (float)$params['amount'] and $saved_qr_code['api_mode'] === $params_api['api_mode']){
+
+			$saved_qr_code_amount = (int)$saved_qr_code['amount'];
+			$invoice_int_amount = (int)preg_replace("/[^0-9]/", "", $params['amount']);
+			$saved_qr_code_float_amount = (float)number_format(($saved_qr_code['amount']/100), 2,'.','');
+
+			if($saved_qr_code['image'] and $saved_qr_code_amount === $invoice_int_amount and $saved_qr_code['api_mode'] === $params_api['api_mode']){
 				if($params['pix_logo']){
 					$result .= '<img style="width: 140px;margin: 18px 10px 0px 0px;" src="'.$ggppwhmcsurl.'/modules/gateways/gofasgalaxpaypix/assets/img/pix.png"></a>';
 				}
@@ -71,15 +76,26 @@ function gofasgalaxpaypix_link($params){
 				
 				$result .= '<button style="position: relative; display: inline-block;"  id="copy_tooltip" class="btn btn-default" onclick="copy_tooltip()" onmouseout="outFunc()">Clique aqui para copiar</button>';
 				$log['saved_qr_code'] = $saved_qr_code;
+				if($error){
+					$result = '<b style="color:red;">Erro: '.$error.'</b>';
+				}
+				if($params['log']){
+					foreach( Capsule::table('tblconfiguration') -> where('setting','=','ggpp_version') -> get(['value']) as $ggpp_version_ ){
+						$ggpp_version			= $ggpp_version_->value;
+					}
+					logModuleCall('gofasgalaxpaypix','gofasgalaxpaypix_link',array('module_version'=>$ggpp_version,),'', $log );
+					//echo '<pre style="height:250px;">',$url,'<br>',print_r($log),'</pre>';
+				}
+				return $result;
 			}
-			if(!$saved_qr_code['image'] || !$saved_qr_code['qrcode'] || (float)($saved_qr_code['amount']/100) !== (float)$params['amount'] || $saved_qr_code['api_mode'] !== $params_api['api_mode']){
+			if(!$saved_qr_code['image'] || !$saved_qr_code['qrcode'] || $saved_qr_code_amount === $invoice_int_amount || $saved_qr_code['api_mode'] !== $params_api['api_mode']){
 				
-				$amount = ((int)$params['amount'])*100;
+				//$amount = ((int)$params['amount'])*100;
 				$postfields = array(
 					'access_token'=> $access_token,
 					'charge'=> ['additionalInfo'=> substr( implode("\n",$line_items),  0, 400),
 						'myId'=> $params['invoiceid'].time(),
-						'value' => $amount,
+						'value' => $invoice_int_amount,
 						'payday'=>date("Y-m-d"),
 						'payedOutsideGalaxPay' => false,
 						'mainPaymentMethodId' => "pix",
@@ -122,7 +138,7 @@ function gofasgalaxpaypix_link($params){
 							[
 								'invoice_id'=>$params['invoiceid'],
 								'charge_id'=>$qr_code_['result']['Charge']['Transactions']['0']['chargeGalaxPayId'],
-								'amount'=>$amount,
+								'amount'=>$qr_code_['result']['Charge']['Transactions']['0']['amount'],
 								'reference'=>$qr_code_['result']['Charge']['Transactions']['0']['Pix']['reference'],
 								'qrcode'=>$qr_code_['result']['Charge']['Transactions']['0']['Pix']['qrCode'],
 								'image'=>$qr_code_['result']['Charge']['Transactions']['0']['Pix']['image'],
@@ -138,14 +154,13 @@ function gofasgalaxpaypix_link($params){
 							[
 								'invoice_id'=>$params['invoiceid'],
 								'charge_id'=>$qr_code_['result']['Charge']['Transactions']['0']['chargeGalaxPayId'],
-								'amount'=>$amount,
+								'amount'=>$qr_code_['result']['Charge']['Transactions']['0']['amount'],
 								'reference'=>$qr_code_['result']['Charge']['Transactions']['0']['Pix']['reference'],
 								'qrcode'=>$qr_code_['result']['Charge']['Transactions']['0']['Pix']['qrCode'],
 								'image'=>$qr_code_['result']['Charge']['Transactions']['0']['Pix']['image'],
 								'api_mode'=>$params_api['api_mode'],
 							]
 						);
-						//$update_qrc = ggpp_update_qrc($qr_code,$params['invoiceid'],$params['amount'],$params['clientdetails']['client_id'],$params_api['api_mode']);
 						if($update_qrc !== 'success'){
 							$error .= $update_qrc;
 						}

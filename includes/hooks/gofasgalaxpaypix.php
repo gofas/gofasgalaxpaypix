@@ -8,7 +8,6 @@
  * @version		0.1.0
  */
 use WHMCS\Database\Capsule;
-
 add_hook("AfterCronJob",1,"ggpp_check_status_updates");
 add_hook("EmailPreSend",1,"ggpp_qrcode_mergetags");
 add_hook("EmailTplMergeFields",1,"ggpp_qrcode_mergetags_fields");
@@ -90,7 +89,7 @@ function ggpp_check_status_updates($vars){
 						'transaction_id'=>$local_pix->id,
 						'total'=>$tblinvoices->total,
 						'user_id'=>$tblinvoices->userid,
-						'paid_amount'=>(float)($pix['result']['Transactions']['0']['value']/100)
+						'paid_amount'=>(float)number_format(($pix['result']['Transactions']['0']['value']/100), 2,'.',''), //(float)($pix['result']['Transactions']['0']['value']/100)
 					];
 				}
 			} // End Foreach

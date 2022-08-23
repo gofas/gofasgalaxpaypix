@@ -368,15 +368,15 @@ if(!function_exists('ggpp_update_qrc') ){
 		$data['updated_at']= date("Y-m-d H:i:s");
 		
 	try {
-		$update_qrc = Capsule::table('gofasgalaxpaypix')->where('invoice_id', '=', $invoice_id)->update($data);
+		$update_qrc = Capsule::table('gofasgalaxpaypix')->where('invoice_id', '=',$data['invoice_id'])->update($data);
 		if($params['log']){
-			logModuleCall('gofasgalaxpaypix','ggpp_update_qrc',array('qrc_for_invoice'=>$qrc_for_invoice,'nf_'=>$nf_,'data'=>$data),'post',array('save_qrc' => $save_qrc),'replaceVars');
+			logModuleCall('gofasgalaxpaypix','ggpp_update_qrc',array('data'=>$data),'post',array('update_qrc' => $update_qrc),'replaceVars');
 		}
 		return 'success';
 	}
 	catch (\Exception $e){
 		if($params['log']){
-			logModuleCall('gofasgalaxpaypix','ggpp_update_qrc',array('qrc_for_invoice'=>$qrc_for_invoice,'nf_'=>$nf_,'data'=>$data),'post',array('save_qrc' => $update_qrc),'replaceVars');
+			logModuleCall('gofasgalaxpaypix','ggpp_update_qrc',array('data'=>$data),'post',array('update_qrc' => $update_qrc),'replaceVars');
 		}
 		return $e->getMessage();
 	}
