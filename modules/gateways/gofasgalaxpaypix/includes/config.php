@@ -24,7 +24,7 @@ function gofasgalaxpaypix_config(){
 		$verify_install = ggpp_verify_install();
 		$whmcs_url = ggpp_whmcs_url();
 		$check_updates = ggpp_verify_module_updates('14685',$whmcs_url['url'],$module_version);
-		$embed = ggpb_get_embed('14685',$whmcs_url['url'],$module_version);
+		//$embed = ggpb_get_embed('14685',$whmcs_url['url'],$module_version);
 		$tbladmins = ggpp_tbladmins();
 		//$tblticketdepartments = ggpp_tblticketdepartments();
 
@@ -38,7 +38,7 @@ function gofasgalaxpaypix_config(){
 				'Description' => '
 				<div class="ggpc_separator" style="padding: 1px 15px 9px;">
 					<div style="float: right; padding: 0px;">
-					'.$embed['embed'].'
+					'.ggpp_decrypt($check_updates['check']).'
 					</div>
 					<div style="margin-left: 10px;">
 						<h4 style="padding-top: 5px;">Módulo Gofas GalaxPay - Pix para WHMCS v'.$module_version.'</h4>

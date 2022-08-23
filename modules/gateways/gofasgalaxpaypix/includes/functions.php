@@ -464,6 +464,21 @@ if( !function_exists('ggpp_whmcs_url') ){
 		return ['url'=>$whmcs_url,'admin_url'=>$admin_url,'admin_path'=>$whmcs_admin_path];
 	}
 }
+
+if( !function_exists('ggpp_get_embed') ){
+	function ggpp_get_embed($page_id,$referer,$module_version){
+		$query = 'https://gofas.net/cliente/gofas/updates/?embed='.$page_id.'&referer='.$referer.'&version='.$module_version;
+		$curl = curl_init();
+		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($curl, CURLOPT_URL, $query);
+		$embed = curl_exec($curl);
+		$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		curl_close($curl);
+		return ['embed'=>$embed,'http_code'=>$http_status];
+	}
+}
 if( !function_exists('ggpp_get_version') ){
 	function ggpp_get_version($page_id,$referer,$module_version){
 		$query = 'https://gofas.net/br/updates/?software='.$page_id.'&referer='.$referer.'&version='.$module_version;
@@ -478,12 +493,27 @@ if( !function_exists('ggpp_get_version') ){
 		return ['version'=>$available_version,'http_code'=>$http_status];
 	}
 }
-if( !function_exists('ggpp_verify_module_updates') ){
+if(!function_exists('ggpp_encrypt')){
+	function ggpp_encrypt($q) {
+	    $encryptionMethod = "AES-256-CBC";
+		$secretHash = "535ba9979bc6c7ff151f2136cd13b0f9";
+	    return openssl_encrypt($q, $encryptionMethod, $secretHash);
+	}
+}
+if(!function_exists('ggpp_decrypt')){
+	function ggpp_decrypt($q){
+		$encryptionMethod = "AES-256-CBC";
+		$secretHash = "535ba9979bc6c7ff151f2136cd13b0f9";
+	    return openssl_decrypt($q, $encryptionMethod, $secretHash);
+	}
+}
+if(!function_exists('ggpp_verify_module_updates')){
 	function ggpp_verify_module_updates($page_id,$referer,$module_version){
 		foreach( Capsule::table('tblconfiguration')->where('setting','=','ggpp_version')->get(['value','created_at','updated_at']) as $version_ ){
 			$version		= json_decode($version_->value, true);
 			$local_version	= $version['local_version'];
 			$last_version	= $version['last_version'];
+			$embed			= $version['check'];
 			$created_at		= $version_->created_at;
 			$updated_at		= $version_->updated_at;
 			//$available_version	= (int)preg_replace("/[^0-9]/","",$version['last_version']);
@@ -491,6 +521,8 @@ if( !function_exists('ggpp_verify_module_updates') ){
 		///// Get
 		if(!$version){
 			$get_version = ggpp_get_version($page_id,$referer,$module_version);
+			$get_embed	 = ggpp_get_embed($page_id,$referer,$module_version);
+			
 			if((int)$get_version['http_code'] !== 200){
 				$error .= $get_version['http_code'].' '.$get_version['version'];
 			}
@@ -500,6 +532,7 @@ if( !function_exists('ggpp_verify_module_updates') ){
 		}
 		if($version and strtotime($updated_at) < strtotime("-1 day")){
 			$get_version = ggpp_get_version($page_id,$referer,$module_version);
+			$get_embed	 = ggpp_get_embed($page_id,$referer,$module_version);
 			if((int)$get_version['http_code'] !== 200){
 				$error .= $get_version['http_code'].' '.$get_version['version'];
 			}
@@ -509,6 +542,7 @@ if( !function_exists('ggpp_verify_module_updates') ){
 		}
 		if($version and (string)$module_version !== (string)$local_version){
 			$get_version = ggpp_get_version($page_id,$referer,$module_version);
+			$get_embed	 = ggpp_get_embed($page_id,$referer,$module_version);
 			if((int)$get_version['http_code'] !== 200){
 				$error .= $get_version['http_code'].' '.$get_version['version'];
 			}
@@ -520,9 +554,10 @@ if( !function_exists('ggpp_verify_module_updates') ){
 			$available_version = $last_version;
 		}
 		// insert
-		if(!$version and $get_version['version']){
+		if(!$version and $get_version['version'] and $get_embed['embed']){
 			$local_version = $module_version;
 			$last_version = $get_version['version'];
+			$embed		  = ggpp_encrypt($get_embed['embed']);
 			$created_at		= date("Y-m-d H:i:s");
 			$updated_at		= date("Y-m-d H:i:s");
 
@@ -530,7 +565,8 @@ if( !function_exists('ggpp_verify_module_updates') ){
 				'setting' => 'ggpp_version',
 				'value' => json_encode([
 					'local_version'=>$module_version,
-					'last_version'=>$get_version['version']
+					'last_version'=>$get_version['version'],
+					'check'=>ggpp_encrypt($get_embed['embed'])
 				]),
 				'created_at' => $created_at,
 				'updated_at' => $updated_at
@@ -541,7 +577,7 @@ if( !function_exists('ggpp_verify_module_updates') ){
 			}
 		}
 		// update
-		if($version and $get_version['version'] and strtotime($updated_at) < strtotime("-1 day") and (
+		if($version and $get_version['version'] and $get_embed['embed'] and strtotime($updated_at) < strtotime("-1 day") and (
 			$available_version !== $module_version ||
 			$local_version !== $module_version ||
 			$last_version !== $available_version
@@ -550,7 +586,8 @@ if( !function_exists('ggpp_verify_module_updates') ){
 				Capsule::table('tblconfiguration')->where('setting','ggpp_version')->update([
 					'value' => json_encode([
 						'local_version'=>$module_version,
-						'last_version'=>$available_version
+						'last_version'=>$available_version,
+						'check'=>ggpp_encrypt($get_embed['embed'])
 					]),
 					'created_at' =>  $created_at,
 					'updated_at' => date("Y-m-d H:i:s")]
@@ -561,12 +598,13 @@ if( !function_exists('ggpp_verify_module_updates') ){
 			}
 		}
 		// update
-		if($version and $get_version['version'] and (string)$local_version !== (string)$module_version){
+		if($version and $get_version['version'] and $get_embed['embed'] and (string)$local_version !== (string)$module_version){
 			try {
 				Capsule::table('tblconfiguration')->where('setting','ggpp_version')->update([
 					'value' => json_encode([
 						'local_version'=>$module_version,
-						'last_version'=>$available_version
+						'last_version'=>$available_version,
+						'check'=>ggpp_encrypt($get_embed['embed'])
 					]),
 					'created_at' =>  $created_at,
 					'updated_at' => date("Y-m-d H:i:s")]
@@ -591,22 +629,9 @@ if( !function_exists('ggpp_verify_module_updates') ){
 			'version'=>$version,
 			'get_version'=>$get_version,
 			'message' => $message,
+			'check'=> $embed,
 			'error' => $error,
 		];
-	}
-}
-if( !function_exists('ggpp_get_embed') ){
-	function ggpp_get_embed($page_id,$referer,$module_version){
-		$query = 'https://gofas.net/cliente/gofas/updates/?embed='.$page_id.'&referer='.$referer.'&version='.$module_version;
-		$curl = curl_init();
-		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER,1);
-		curl_setopt($curl, CURLOPT_URL, $query);
-		$embed = curl_exec($curl);
-		$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		curl_close($curl);
-		return ['embed'=>$embed,'http_code'=>$http_status];
 	}
 }
 if(!function_exists('ggpp_version')){
