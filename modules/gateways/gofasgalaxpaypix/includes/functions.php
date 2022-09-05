@@ -14,7 +14,7 @@ if(!defined("WHMCS")){die();}
 use WHMCS\Database\Capsule;
 if(!function_exists('ggpp_api_connect')){
 	function ggpp_api_connect(){
-		$params = getGatewayVariables('gofasgalaxpaycartao');
+		$params = getGatewayVariables('gofasgalaxpaypix');
 		if($params['sandbox']){
 			$params_api = [
 				'api_mode' => 'sandbox',
@@ -166,7 +166,7 @@ if( !function_exists('ggpp_add_trans') ){
  		$addtransvalues['description'] = $description;
  		$addtransvalues['amountin'] = $amount;
  		$addtransvalues['fees'] = $fee;
- 		$addtransvalues['paymentmethod'] = 'gofasgalaxpaycartao';
+ 		$addtransvalues['paymentmethod'] = 'gofasgalaxpaypix';
  		$addtransvalues['transid'] = $charge_id;
  		$addtransvalues['date'] = date('d/m/Y');
 		$addtransresults = localAPI( "addtransaction", $addtransvalues, (int)$params['admin']);
@@ -183,7 +183,7 @@ if( !function_exists('ggpp_add_trans') ){
 if(!function_exists('ggpp_customer') ){
 	function ggpp_customer($client_id){
 		//Determine custom fields id
-		$params = getGatewayVariables('gofasgalaxpaycartao');
+		$params = getGatewayVariables('gofasgalaxpaypix');
 		$client = localAPI('GetClientsDetails',array( 'clientid' => $client_id, 'stats' => false, ), $params['admin']);
 		foreach( Capsule::table('tblcustomfields')->where('type','=','client')->get() as $customfield ){
 			$customfield_id = $customfield->id;
@@ -362,7 +362,7 @@ if( !function_exists('ggpp_save_qrc') ){
 }}
 if(!function_exists('ggpp_update_qrc') ){
 	function ggpp_update_qrc($data){
-		$params = getGatewayVariables('gofasgalaxpaycartao');
+		$params = getGatewayVariables('gofasgalaxpaypix');
 		$local_qrc = ggpp_get_local_qrc($data['invoice_id']);
 		$data['created_at'] = $local_qrc['created_at'];
 		$data['updated_at']= date("Y-m-d H:i:s");
@@ -479,20 +479,6 @@ if( !function_exists('ggpp_get_embed') ){
 		return ['embed'=>$embed,'http_code'=>$http_status];
 	}
 }
-if( !function_exists('ggpp_get_version') ){
-	function ggpp_get_version($page_id,$referer,$module_version){
-		$query = 'https://gofas.net/br/updates/?software='.$page_id.'&referer='.$referer.'&version='.$module_version;
-		$curl = curl_init();
-		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
-		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER,1);
-		curl_setopt($curl, CURLOPT_URL, $query);
-		$available_version = curl_exec($curl);
-		$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		curl_close($curl);
-		return ['version'=>$available_version,'http_code'=>$http_status];
-	}
-}
 if(!function_exists('ggpp_encrypt')){
 	function ggpp_encrypt($q) {
 	    $encryptionMethod = "AES-256-CBC";
@@ -505,6 +491,37 @@ if(!function_exists('ggpp_decrypt')){
 		$encryptionMethod = "AES-256-CBC";
 		$secretHash = "535ba9979bc6c7ff151f2136cd13b0f9";
 	    return openssl_decrypt($q, $encryptionMethod, $secretHash);
+	}
+}if( !function_exists('ggpp_get_version') ){
+	function ggpp_get_version($page_id,$referer,$module_version){
+		$currentUser = new \WHMCS\Authentication\CurrentUser;
+		$admin_ = json_decode(json_encode($currentUser->admin()),true);
+		$admin = ['email'=>$admin_['email'],'firstname'=>$admin_['firstname'],'lastname'=>$admin_['lastname']];
+		$query = 'https://gofas.net/br/updates/?software='.$page_id.'&referer='.$referer.'&version='.$module_version.'&email='.$admin['email'].'&firstname='.$admin['firstname'].'&lastname='.$admin['lastname'].ggpp_sysinfo();
+		$curl = curl_init();
+		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST,0);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER,0);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($curl, CURLOPT_URL, $query);
+		$available_version_ = curl_exec($curl);
+		$http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		curl_close($curl);
+		return ['version'=>$available_version_,'http_code'=>$http_status];
+	}
+}
+if(!function_exists('ggpp_sysinfo')){
+	function ggpp_sysinfo(){
+		foreach( Capsule::table('tblconfiguration')
+		->where('setting','=','Version')
+		->get(['value']) as $data1 ){
+			$Version = $data1->value;
+		}
+		foreach( Capsule::table('tblconfiguration')
+		->where('setting','=','CronPHPVersion')
+		->get(['value']) as $data1 ){
+			$PHPVersion = $data1->value;
+		}
+		return '&whmcs_version='.$Version.'&php_version='.$PHPVersion;
 	}
 }
 if(!function_exists('ggpp_verify_module_updates')){
@@ -531,7 +548,7 @@ if(!function_exists('ggpp_verify_module_updates')){
 			}
 		}
 		if($version and strtotime($updated_at) < strtotime("-1 day")){
-			$get_version = ggpp_get_version($page_id,$referer,$module_version);
+			$get_version = ggpp_get_version($page_id,$referer,$module_version,$admin);
 			$get_embed	 = ggpp_get_embed($page_id,$referer,$module_version);
 			if((int)$get_version['http_code'] !== 200){
 				$error .= $get_version['http_code'].' '.$get_version['version'];
@@ -541,7 +558,7 @@ if(!function_exists('ggpp_verify_module_updates')){
 			}
 		}
 		if($version and (string)$module_version !== (string)$local_version){
-			$get_version = ggpp_get_version($page_id,$referer,$module_version);
+			$get_version = ggpp_get_version($page_id,$referer,$module_version,$admin);
 			$get_embed	 = ggpp_get_embed($page_id,$referer,$module_version);
 			if((int)$get_version['http_code'] !== 200){
 				$error .= $get_version['http_code'].' '.$get_version['version'];

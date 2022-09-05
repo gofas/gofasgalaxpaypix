@@ -19,15 +19,12 @@ function gofasgalaxpaypix_MetaData(){
 function gofasgalaxpaypix_config(){
 	if(stripos($_SERVER['REQUEST_URI'], '/configgateways.php')!==false){
 		require __DIR__.'/functions.php';
-		$module_version = '0.2.0';
-		
+		$module_version = '1.0.0';
+		$module_page	= '14685';
 		$verify_install = ggpp_verify_install();
 		$whmcs_url = ggpp_whmcs_url();
-		$check_updates = ggpp_verify_module_updates('14685',$whmcs_url['url'],$module_version);
-		//$embed = ggpb_get_embed('14685',$whmcs_url['url'],$module_version);
+		$check_updates = ggpp_verify_module_updates($module_page,$whmcs_url['url'],$module_version);
 		$tbladmins = ggpp_tbladmins();
-		//$tblticketdepartments = ggpp_tblticketdepartments();
-
 		$opt_num = 1;
 		$renderize = array(
 			'FriendlyName' => array(
@@ -116,7 +113,7 @@ function gofasgalaxpaypix_config(){
 				'Type' => 'text',
 				'Size' => '10',
 				'Default' => '5',
-				'Description' => 'Insira o valor total mínimo da fatura para permitir pagamento via Cartão. Formato: Decimal, separado por ponto. Maior ou igual a sua tarifa (a partir de 2.50) e menor ou igual a 1000000.00.',
+				'Description' => 'Insira o valor total mínimo da fatura para permitir pagamento via Pix. Formato: Decimal, separado por ponto. Maior ou igual a sua tarifa (a partir de 2.50) e menor ou igual a 1000000.00.',
 			),
 			// fee
 			'fee' => array(
