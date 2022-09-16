@@ -1,0 +1,23 @@
+{
+  "schema": "1.0",
+  "type": "whmcs-gateways",
+  "name": "gofasgalaxpaypix",
+  "license": "proprietary",
+  "category": "payments",
+  "description": {
+    "name": "Gofas GalaxPay Pix",
+    "tagline": "Cobranças via Pix com QR Code diretamente nas faturas do WHMCS."
+  },
+  "logo": {
+    "filename": "/assets/img/logo.png"
+  },
+  "support": {
+    "docs_url": "https:\/\/gofas.net\/ggpp"
+  },
+  "authors": [
+    {
+      "name": "Gofas Software",
+      "homepage": "https:\/\/gofas.net\/"
+    }
+  ]
+}
