@@ -5,12 +5,12 @@
  * @see			https://gofas.net/?p=14685
  * @license		https://gofas.net/?p=9340
  * @support		https://gofas.net/?p=14690
- * @version		0.1.0
+ * @version		1.0.1
  */
 
 use WHMCS\Database\Capsule;
 //require __DIR__.'/includes/cron.php';
-require __DIR__.'/includes/hooks.php';
+//require __DIR__.'/includes/hooks.php';
 require_once __DIR__.'/includes/config.php';
 function gofasgalaxpaypix_link($params){
 	if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice.php') !== false ){

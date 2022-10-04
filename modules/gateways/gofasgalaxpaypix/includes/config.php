@@ -5,7 +5,7 @@
  * @see			https://gofas.net/?p=14685
  * @license		https://gofas.net/?p=9340
  * @support		https://gofas.net/?p=14690
- * @version		0.2.0
+ * @version		1.0.1
  */
 
 if( !defined('WHMCS')){ die(''); }
@@ -19,7 +19,7 @@ function gofasgalaxpaypix_MetaData(){
 function gofasgalaxpaypix_config(){
 	if(stripos($_SERVER['REQUEST_URI'], '/configgateways.php')!==false){
 		require __DIR__.'/functions.php';
-		$module_version = '1.0.0';
+		$module_version = '1.0.1';
 		$module_page	= '14685';
 		$verify_install = ggpp_verify_install();
 		$whmcs_url = ggpp_whmcs_url();
