@@ -89,8 +89,10 @@ function gofasgalaxpaypix_link($params){
 				return $result;
 			}
 			if(!$saved_qr_code['image'] || !$saved_qr_code['qrcode'] || $saved_qr_code_amount === $invoice_int_amount || $saved_qr_code['api_mode'] !== $params_api['api_mode']){
-				
-				//$amount = ((int)$params['amount'])*100;
+				$line_items = array();
+				foreach( $GetInvoiceResults['items']['item'] as $Value){
+					$line_items[]	= substr( $Value['description'],  0, 80).' | R$ '.number_format( $Value['amount'],  2, ',', '.');	
+				}
 				$postfields = array(
 					'access_token'=> $access_token,
 					'charge'=> ['additionalInfo'=> substr( implode("\n",$line_items),  0, 400),
