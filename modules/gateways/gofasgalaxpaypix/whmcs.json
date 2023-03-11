@@ -1,18 +1,18 @@
 {
   "schema": "1.0",
   "type": "whmcs-gateways",
-  "name": "gofasiugupix",
+  "name": "gofasgalaxpaypix",
   "license": "proprietary",
   "category": "payments",
   "description": {
-    "name": "Gofas iugu Pix",
+    "name": "Gofas GalaxPay Pix",
     "tagline": "Cobranças via Pix com QR Code diretamente nas faturas do WHMCS."
   },
   "logo": {
     "filename": "/assets/img/logo.png"
   },
   "support": {
-    "docs_url": "https:\/\/gofas.net\/gip"
+    "docs_url": "https:\/\/gofas.net\/ggpp"
   },
   "authors": [
     {

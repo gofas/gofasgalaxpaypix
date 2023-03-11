@@ -1,23 +1,23 @@
 <?php
 /**
- * Módulo iugu Pix para WHMCS
+ * Módulo GalaxPay Pix para WHMCS
  * @copyright	2022 Gofas Software
- * @see			https://gofas.net/?p=14950
+ * @see			https://gofas.net/?p=14685
  * @license		https://gofas.net/?p=9340
  * @support		https://gofas.net/?p=14690
- * @version		1.0.0
+ * @version		1.0.1
  */
 
 use WHMCS\Database\Capsule;
 //require __DIR__.'/includes/cron.php';
 //require __DIR__.'/includes/hooks.php';
 require_once __DIR__.'/includes/config.php';
-function gofasiugupix_link($params){
+function gofasgalaxpaypix_link($params){
 	if(stripos($_SERVER['REQUEST_URI'], 'viewinvoice.php') !== false ){
 		require __DIR__.'/includes/functions.php';
 		$log['params'] = $params;
 		if($params['amount'] >= $params['minimunamount']){
-			$access_token_ = gip_get_token();
+			$access_token_ = ggpp_get_token();
 			$access_token = $access_token_['result']['access_token'];
 			if($access_token_['result']['access_token']){
 				 $access_token = $access_token_['result']['access_token'];
@@ -27,8 +27,8 @@ function gofasiugupix_link($params){
 			}
 			$log['access_token_'] = $access_token_;
 				
-			foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'gipwhmcsurl') -> get( array( 'value','created_at') ) as $gipwhmcsurl_ ){
-				$gipwhmcsurl					= $gipwhmcsurl_->value;
+			foreach( Capsule::table('tblconfiguration') -> where('setting', '=', 'ggppwhmcsurl') -> get( array( 'value','created_at') ) as $ggppwhmcsurl_ ){
+				$ggppwhmcsurl					= $ggppwhmcsurl_->value;
 			}
 			$result .= '<script>
 			function copy_tooltip() {
@@ -45,13 +45,13 @@ function gofasiugupix_link($params){
 				setTimeout(function(){ tooltip.innerHTML = "Clique aqui para copiar"; }, 1000);
 			  }
 			</script>';
-			$result .= '<script type="text/javascript" src="'.$gipwhmcsurl.'modules/gateways/gofasiugupix/assets/js/scripts.js" charset="UTF-8"></script>';
-			$result .= '<input type="hidden" id="system_url" value="'.$gipwhmcsurl.'">';
+			$result .= '<script type="text/javascript" src="'.$ggppwhmcsurl.'modules/gateways/gofasgalaxpaypix/assets/js/scripts.js" charset="UTF-8"></script>';
+			$result .= '<input type="hidden" id="system_url" value="'.$ggppwhmcsurl.'">';
 			$result .= '<input type="hidden" id="invoice_id" value="'.$params['invoiceid'].'">';
-			$params_api = gip_api_connect();
-			$customer = gip_customer($params['clientdetails']['id']);
+			$params_api = ggpp_api_connect();
+			$customer = ggpp_customer($params['clientdetails']['id']);
 
-			$saved_qr_code = gip_get_local_qrc($params['invoiceid']);
+			$saved_qr_code = ggpp_get_local_qrc($params['invoiceid']);
 
 			$saved_qr_code_amount = (int)$saved_qr_code['amount'];
 			$invoice_int_amount = (int)preg_replace("/[^0-9]/", "", $params['amount']);
@@ -59,7 +59,7 @@ function gofasiugupix_link($params){
 
 			if($saved_qr_code['image'] and (int)$saved_qr_code_amount === (int)$invoice_int_amount and $saved_qr_code['api_mode'] === $params_api['api_mode']){
 				if($params['pix_logo']){
-					$result .= '<img style="width: 140px;margin: 18px 10px 0px 0px;" src="'.$gipwhmcsurl.'/modules/gateways/gofasiugupix/assets/img/pix.png"></a>';
+					$result .= '<img style="width: 140px;margin: 18px 10px 0px 0px;" src="'.$ggppwhmcsurl.'/modules/gateways/gofasgalaxpaypix/assets/img/pix.png"></a>';
 				}
 				if($params['top_message']){
 					$result .= '<p style=" margin: 20px 0px 0px 0px; ">'.$params['top_message'].'</p>';
@@ -80,10 +80,10 @@ function gofasiugupix_link($params){
 					$result = '<b style="color:red;">Erro: '.$error.'</b>';
 				}
 				if($params['log']){
-					foreach( Capsule::table('tblconfiguration') -> where('setting','=','gip_version') -> get(['value']) as $gip_version_ ){
-						$gip_version			= $gip_version_->value;
+					foreach( Capsule::table('tblconfiguration') -> where('setting','=','ggpp_version') -> get(['value']) as $ggpp_version_ ){
+						$ggpp_version			= $ggpp_version_->value;
 					}
-					logModuleCall('gofasiugupix','gofasiugupix_link',array('module_version'=>$gip_version,),'', $log );
+					logModuleCall('gofasgalaxpaypix','gofasgalaxpaypix_link',array('module_version'=>$ggpp_version,),'', $log );
 					//echo '<pre style="height:250px;">',$url,'<br>',print_r($log),'</pre>';
 				}
 				return $result;
@@ -99,7 +99,7 @@ function gofasiugupix_link($params){
 						'myId'=> $params['invoiceid'].time(),
 						'value' => $invoice_int_amount,
 						'payday'=>date("Y-m-d"),
-						'payedOutsideiugu' => false,
+						'payedOutsideGalaxPay' => false,
 						'mainPaymentMethodId' => "pix",
 						'Customer' => [
 							'myId'=> $customer['id'],
@@ -128,7 +128,7 @@ function gofasiugupix_link($params){
     					],
 					]
 				);
-				$qr_code_ = gip_charge($postfields);
+				$qr_code_ = ggpp_charge($postfields);
 				if($qr_code_['result']['error']['message']){
 					$error .= $qr_code_['result']['error']['message'];
 				}
@@ -136,10 +136,10 @@ function gofasiugupix_link($params){
 				if($qr_code_['result']['Charge']['Transactions']['0']['Pix']['image']){
 				
 					if(!$saved_qr_code['image'] || !$saved_qr_code['qrcode']){
-						$save_qrc = gip_save_qrc(
+						$save_qrc = ggpp_save_qrc(
 							[
 								'invoice_id'=>$params['invoiceid'],
-								'charge_id'=>$qr_code_['result']['Charge']['Transactions']['0']['chargeiuguId'],
+								'charge_id'=>$qr_code_['result']['Charge']['Transactions']['0']['chargeGalaxPayId'],
 								'amount'=>$qr_code_['result']['Charge']['Transactions']['0']['value'],
 								'reference'=>$qr_code_['result']['Charge']['Transactions']['0']['Pix']['reference'],
 								'qrcode'=>$qr_code_['result']['Charge']['Transactions']['0']['Pix']['qrCode'],
@@ -152,10 +152,10 @@ function gofasiugupix_link($params){
 						}
 					}
 					if($saved_qr_code['image']){
-						$update_qrc = gip_update_qrc(
+						$update_qrc = ggpp_update_qrc(
 							[
 								'invoice_id'=>$params['invoiceid'],
-								'charge_id'=>$qr_code_['result']['Charge']['Transactions']['0']['chargeiuguId'],
+								'charge_id'=>$qr_code_['result']['Charge']['Transactions']['0']['chargeGalaxPayId'],
 								'amount'=>$qr_code_['result']['Charge']['Transactions']['0']['value'],
 								'reference'=>$qr_code_['result']['Charge']['Transactions']['0']['Pix']['reference'],
 								'qrcode'=>$qr_code_['result']['Charge']['Transactions']['0']['Pix']['qrCode'],
@@ -168,7 +168,7 @@ function gofasiugupix_link($params){
 						}
 					}
 					if($params['pix_logo']){
-						$result .= '<img style="width: 140px;margin: 18px 10px 0px 0px;" src="'.$gipwhmcsurl.'/modules/gateways/gofasiugupix/assets/img/pix.png"></a>';
+						$result .= '<img style="width: 140px;margin: 18px 10px 0px 0px;" src="'.$ggppwhmcsurl.'/modules/gateways/gofasgalaxpaypix/assets/img/pix.png"></a>';
 					}
 					if(!$params['top_message']){
 						$result .= '<p style=" margin: 20px 0px 0px 0px; ">Pague escaneando o QR code<br>ou copiando e colando a chave</p>';
@@ -192,10 +192,10 @@ function gofasiugupix_link($params){
 		    	$result = '<b style="color:red;">Erro: '.$error.'</b>';
 			}
 			if($params['log']){
-				foreach( Capsule::table('tblconfiguration') -> where('setting','=','gip_version') -> get(['value']) as $gip_version_ ){
-					$gip_version			= $gip_version_->value;
+				foreach( Capsule::table('tblconfiguration') -> where('setting','=','ggpp_version') -> get(['value']) as $ggpp_version_ ){
+					$ggpp_version			= $ggpp_version_->value;
 				}
-				logModuleCall('gofasiugupix','gofasiugupix_link',array('module_version'=>$gip_version,),'', $log );
+				logModuleCall('gofasgalaxpaypix','gofasgalaxpaypix_link',array('module_version'=>$ggpp_version,),'', $log );
 				//echo '<pre style="height:250px;">',$url,'<br>',print_r($log),'</pre>';
 			}
 			return $result;
@@ -207,13 +207,13 @@ function gofasiugupix_link($params){
 	}
 }
 
-function gofasiugupix_refund($params){
+function gofasgalaxpaypix_refund($params){
 	require_once __DIR__.'/includes/functions.php';
-	$params_api = gip_api_connect();
-	$access_token_ = gip_get_token();
+	$params_api = ggpp_api_connect();
+	$access_token_ = ggpp_get_token();
 	$access_token = $access_token_['result']['access_token'];
-	$charge_id = gip_get_string_between($params['transid'], 'gip-', '-'.$params_api['api_mode']);
-	$refund = gip_refund($charge_id);
+	$charge_id = ggpp_get_string_between($params['transid'], 'ggpp-', '-'.$params_api['api_mode']);
+	$refund = ggpp_refund($charge_id);
 
 	$GetTransactions = localAPI('GetTransactions',array('transid' => $params['transid']), (int)$params['admin']);
 	$dt = new DateTime($GetTransactions['transactions']['transaction']['0']['date']);
@@ -226,7 +226,7 @@ function gofasiugupix_refund($params){
 		$fee = NULL;
 	}
 	if($params['log']){
-		logModuleCall('gofasiugupix', 'refund_payment', array('module_version'=>gip_version(),'params'=>$params,'GetTransactions'=>$GetTransactions), 'post',  array('access_token'=> $access_token,'charge_id'=> $charge_id,'refund'=>$refund), 'replaceVars');
+		logModuleCall('gofasgalaxpaypix', 'refund_payment', array('module_version'=>ggpp_version(),'params'=>$params,'GetTransactions'=>$GetTransactions), 'post',  array('access_token'=> $access_token,'charge_id'=> $charge_id,'refund'=>$refund), 'replaceVars');
 	}
 	if( $refund['result']['error']){
 		return array(
@@ -238,7 +238,7 @@ function gofasiugupix_refund($params){
 	    return array(
         	'status' => 'success',
         	'rawdata' => $refund,
-        	'gip-'.$charge['result']['Charge']['galaxPayId'].'-'.$params_api['api_mode'].'-'.$charge_id.'.',
+        	'ggpp-'.$charge['result']['Charge']['galaxPayId'].'-'.$params_api['api_mode'].'-'.$charge_id.'.',
 			'fee' => $fee,
     	);
 	}
