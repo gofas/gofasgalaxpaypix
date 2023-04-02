@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased](https://github.com/mauriciogofas/gofasgalaxpaypix/tree/HEAD)
+
+[Full Changelog](https://github.com/mauriciogofas/gofasgalaxpaypix/compare/v1.1.0...HEAD)
+
+**Implemented enhancements:**
+
+- Diretório raíz do WHMCS agora é obtido via banco de dados a consultando o diretório do template ativo \(para casos onde localizações relativas podem falhar\) [\#5](https://github.com/mauriciogofas/gofasgalaxpaypix/issues/5)
+
 ## [v1.1.0](https://github.com/mauriciogofas/gofasgalaxpaypix/tree/v1.1.0) (02/04/2023)
 
 [Full Changelog](https://github.com/mauriciogofas/gofasgalaxpaypix/compare/22f70ece917d53b96ec99e06232e825ed0eab04e...v1.1.0)
