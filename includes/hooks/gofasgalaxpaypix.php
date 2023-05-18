@@ -8,6 +8,26 @@
  * @version		0.1.0
  */
 use WHMCS\Database\Capsule;
+use WHMCS\Aplication;
+if(!function_exists('ggpp_get_protected_property')){
+	function ggpp_get_protected_property($object, $property){
+	    $reflectedClass = new \ReflectionClass($object);
+	    $reflection = $reflectedClass->getProperty($property);
+	    $reflection->setAccessible(true);
+	    return $reflection->getValue($object);
+	}
+}
+if( !function_exists('ggpp_get_string_between') ){
+    function ggpp_get_string_between($string, $start, $end){
+        $string = " ".$string;
+        $ini = strpos($string,$start);
+        if ($ini == 0) return "";
+        $ini += strlen($start);   
+        $len = strpos($string,$end,$ini) - $ini;
+        return substr($string,$ini,$len);
+    }
+}
+
 add_hook("AfterCronJob",1,"ggpp_check_status_updates");
 add_hook("EmailPreSend",1,"ggpp_qrcode_mergetags");
 add_hook("EmailTplMergeFields",1,"ggpp_qrcode_mergetags_fields");
@@ -62,10 +82,11 @@ if(!function_exists('ggpp_qrcode_mergetags')){
 	}
     }
 }
-
 if(!function_exists('ggpp_check_status_updates')){
 function ggpp_check_status_updates($vars){
-	require_once __DIR__.'/../../modules/gateways/gofasgalaxpaypix/includes/functions.php';
+	$self = App::self();
+	$root_dir = '/'.ggpp_get_string_between(ggpp_get_protected_property(ggpp_get_protected_property(ggpp_get_protected_property(ggpp_get_protected_property($self, 'clientTemplate'), 'config'),'configFile'),'path'),'/','/templates/');
+	require_once $root_dir.'/modules/gateways/gofasgalaxpaypix/includes/functions.php';
 	$params = getGatewayVariables('gofasgalaxpaypix');
 	$params_api = ggpp_api_connect();
 	// Get Billets
