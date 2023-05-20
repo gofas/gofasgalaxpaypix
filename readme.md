@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased](https://github.com/mauriciogofas/gofasgalaxpaypix/tree/HEAD)
+## [v1.2.0](https://github.com/mauriciogofas/gofasgalaxpaypix/tree/v1.2.0) (18/05/2023)
 
-[Full Changelog](https://github.com/mauriciogofas/gofasgalaxpaypix/compare/v1.1.0...HEAD)
+[Full Changelog](https://github.com/mauriciogofas/gofasgalaxpaypix/compare/v1.1.0...v1.2.0)
 
 **Implemented enhancements:**
 
