@@ -43,9 +43,6 @@ if(!function_exists('ggpp_qrcode_mergetags_fields')){
 }
 if(!function_exists('ggpp_qrcode_mergetags')){
     function ggpp_qrcode_mergetags($vars){
-        $params = getGatewayVariables('gofasgalaxpaypix');
-	//$pixonemail					= $params['pixonemail'];
-	
 	// Invoice Created | Invoice Payment Reminder | First Invoice Overdue Notice |  Second Invoice Overdue Notice |  Third Invoice Overdue Notice 
     if(
 		$vars['messagename'] === 'Invoice Created' ||
@@ -54,6 +51,7 @@ if(!function_exists('ggpp_qrcode_mergetags')){
 		$vars['messagename'] === 'Second Invoice Overdue Notice' ||
 		$vars['messagename'] === 'Third Invoice Overdue Notice'
 	){
+		$params = getGatewayVariables('gofasgalaxpaypix');
 		$ggpp_merge_fields	= array();
 		$invoice			= localAPI( 'GetInvoice', array('invoiceid' => $vars['relid']), (int)$params['admin']);
 		
