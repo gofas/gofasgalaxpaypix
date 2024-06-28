@@ -12,7 +12,7 @@ if( !defined('WHMCS')){ die(''); }
 use WHMCS\Database\Capsule;
 function gofasgalaxpaypix_MetaData(){
     return array(
-        'DisplayName' => 'Gofas GalaxPay - Pix',
+        'DisplayName' => 'Gofas GalaxPay Pix',
         'APIVersion' => '1.1',
     );
 }
@@ -29,7 +29,7 @@ function gofasgalaxpaypix_config(){
 		$renderize = array(
 			'FriendlyName' => array(
 				'Type' => 'System',
-				'Value' => 'Gofas GalaxPay - Pix',
+				'Value' => 'Gofas GalaxPay Pix',
 			),
 			'separator_1' => array(
 				'Description' => '
@@ -38,7 +38,7 @@ function gofasgalaxpaypix_config(){
 					'.ggpp_decrypt($check_updates['check']).'
 					</div>
 					<div style="margin-left: 10px;">
-						<h4 style="padding-top: 5px;">Módulo Gofas GalaxPay - Pix para WHMCS v'.$module_version.'</h4>
+						<h4 style="padding-top: 5px;">Módulo Gofas GalaxPay Pix para WHMCS v'.$module_version.'</h4>
 						'.$check_updates['message'].'
 						<p><a style="text-decoration:underline;" target="_blank" href="https://gofas.net/?p=14685#configuration">Documentação do módulo</a>.</p>
 						<p><a style="text-decoration:underline;" target="_blank" href="https://docs.galaxpay.com.br/">Documentação da API GalaxPay</a>.</p>
