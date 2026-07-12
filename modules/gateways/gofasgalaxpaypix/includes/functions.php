@@ -5,7 +5,7 @@
  * @see			https://gofas.net/?p=14685
  * @license		https://gofas.net/?p=9340
  * @support		https://gofas.net/?p=14690
- * @version		0.1.0
+ * @version		1.3.0
  */
 require_once __DIR__ . '/../../../../init.php';
 require_once __DIR__ . '/../../../../includes/gatewayfunctions.php';
@@ -177,7 +177,7 @@ if(!function_exists('ggpp_get_local_version')){
 }}
 if(!function_exists('ggpp_update_stats') ){
 	function ggpp_module_version(){
-		return '1.2.1';
+		return '1.3.0';
 	}
 	function ggpp_update_stats(){
 		$params = getGatewayVariables('gofasgalaxpaypix');
