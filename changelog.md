@@ -1,6 +1,6 @@
 # Changelog
 
-## [Próxima atualização](https://github.com/gofas/gofasgalaxpaypix/tree/HEAD)
+## [v1.3.0 - 12/07/2026](https://github.com/gofas/gofasgalaxpaypix/releases/tag/v1.3.0)
 
 
 **Melhorias:**
@@ -11,7 +11,7 @@
 
 - Evita erro getGatewayVariables not defined - [#6](https://github.com/gofas/gofasgalaxpaypix/issues/6) <a href="https://github.com/gofas/gofasgalaxpaypix/issues?q=is%3Aissue+state%3Aclosed+label%3Abug" style="color:#a99c9c;text-decoration:none"><code>bug</code></a>
 
-[Comparar versões](https://github.com/gofas/gofasgalaxpaypix/compare/v1.2.1...HEAD)
+[Comparar versões](https://github.com/gofas/gofasgalaxpaypix/compare/v1.2.1...v1.3.0)
 
 ## [v1.2.1 - 07/06/2026](https://github.com/gofas/gofasgalaxpaypix/releases/tag/v1.2.1)
 
