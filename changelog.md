@@ -5,6 +5,7 @@
 
 **Melhorias:**
 
+- readme: contador do site, captura sem aviso de hook e secao de licenca - [#11](https://github.com/gofas/gofasgalaxpaypix/issues/11)
 - readme: captura versionada, badges e sumario - [#10](https://github.com/gofas/gofasgalaxpaypix/issues/10)
 - readme: marca correta e cel_cash (GalaxPay e a marca antiga) - [#9](https://github.com/gofas/gofasgalaxpaypix/issues/9)
 - readme: conteudo da pagina do site transferido e captura de configuracao - [#8](https://github.com/gofas/gofasgalaxpaypix/issues/8)
