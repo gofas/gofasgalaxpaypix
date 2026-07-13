@@ -5,6 +5,7 @@
 
 **Melhorias:**
 
+- readme: marca correta e cel_cash (GalaxPay e a marca antiga) - [#9](https://github.com/gofas/gofasgalaxpaypix/issues/9)
 - readme: conteudo da pagina do site transferido e captura de configuracao - [#8](https://github.com/gofas/gofasgalaxpaypix/issues/8)
 
 [Comparar versões](https://github.com/gofas/gofasgalaxpaypix/compare/v1.3.0...HEAD)
