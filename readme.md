@@ -1,12 +1,28 @@
 # Módulo cel_cash Pix para WHMCS
 
+[![versão](https://img.shields.io/github/v/release/gofas/gofasgalaxpaypix?label=vers%C3%A3o&color=005071&style=flat-square)](https://github.com/gofas/gofasgalaxpaypix/releases/latest)
+[![downloads](https://img.shields.io/github/downloads/gofas/gofasgalaxpaypix/total?label=downloads&color=005071&style=flat-square)](https://github.com/gofas/gofasgalaxpaypix/releases/latest)
+[![licença](https://img.shields.io/badge/licen%C3%A7a-propriet%C3%A1ria-005071?style=flat-square)](https://gofas.net/contrato-de-venda-de-licenca-de-uso-de-software/)
+[![suporte](https://img.shields.io/badge/suporte-f%C3%B3rum%20gratuito-ff8700?style=flat-square)](https://gofas.net/foruns/)
+
 Módulo gratuito de integração que gera cobranças Pix com código QR direto nas faturas do WHMCS através da API cel_cash, com confirmação automática do pagamento. Desenvolvido pela Gofas Software.
+
+## Sumário
+
+- [Download](#download)
+- [Funcionalidades](#funcionalidades)
+- [Requisitos](#requisitos)
+- [Instalação](#instalação)
+- [Configuração](#configuração)
+- [Informações importantes](#informações-importantes)
+- [Suporte](#suporte)
+- [Licença](#licença)
 
 ## Download
 
-Baixe a versão mais recente:
+**[Baixar a versão mais recente](https://github.com/gofas/gofasgalaxpaypix/releases/latest/download/gofasgalaxpaypix.zip)**
 
-https://github.com/gofas/gofasgalaxpaypix/releases/latest/download/gofasgalaxpaypix.zip
+O download é contabilizado no site pelo contador de instalações do módulo.
 
 ## Funcionalidades
 
@@ -50,7 +66,7 @@ Crie um campo personalizado de cliente para CPF e/ou CNPJ, ou dois campos distin
 
 ### Opções do módulo
 
-<img src="https://raw.githubusercontent.com/gofas/gofasgalaxpaypix/master/docs/img/tela-configuracoes-modulo.png" alt="Tela de configuracoes do modulo" width="640">
+<img src="https://raw.githubusercontent.com/gofas/gofasgalaxpaypix/master/docs/img/tela-configuracoes-modulo-1.3.0.png" alt="Tela de configuracoes do modulo" width="640">
 
 - **Galax ID** e **Galax Hash**: credenciais do Webservice em produção.
 - **Sandbox Galax ID** e **Sandbox Galax Hash**: credenciais do Webservice em modo de testes.
