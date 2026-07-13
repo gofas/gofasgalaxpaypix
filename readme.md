@@ -2,7 +2,7 @@
 
 [![versão](https://img.shields.io/github/v/release/gofas/gofasgalaxpaypix?label=vers%C3%A3o&color=005071&style=flat-square)](https://github.com/gofas/gofasgalaxpaypix/releases/latest)
 [![downloads](https://img.shields.io/endpoint?url=https%3A%2F%2Fgofas.net%2Fwp-json%2Fgofas%2Fv1%2Fbadge%2Fgofasgalaxpaypix&style=flat-square)](https://github.com/gofas/gofasgalaxpaypix/releases/latest)
-[![suporte](https://img.shields.io/badge/suporte-f%C3%B3rum%20gratuito-ff8700?style=flat-square)](https://gofas.net/foruns/)
+[![abrir issue](https://img.shields.io/badge/suporte-abrir%20issue-ff8700?style=flat-square)](https://gofas.net/?p=14690/#new-post)
 
 Módulo gratuito de integração que gera cobranças Pix com código QR direto nas faturas do WHMCS através da API cel_cash, com confirmação automática do pagamento. Desenvolvido pela Gofas Software.
 
@@ -85,7 +85,7 @@ Crie um campo personalizado de cliente para CPF e/ou CNPJ, ou dois campos distin
 
 ## Suporte
 
-Fórum de suporte gratuito: https://gofas.net/foruns/
+[Abrir issue](https://gofas.net/?p=14690/#new-post) no fórum do módulo.
 
 ## Licença
 
