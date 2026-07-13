@@ -1,6 +1,6 @@
-# Módulo GalaxPay Pix para WHMCS
+# Módulo cel_cash Pix para WHMCS
 
-Módulo gratuito de integração que gera cobranças Pix com código QR direto nas faturas do WHMCS através da API GalaxPay, com confirmação automática do pagamento. Desenvolvido pela Gofas Software.
+Módulo gratuito de integração que gera cobranças Pix com código QR direto nas faturas do WHMCS através da API cel_cash, com confirmação automática do pagamento. Desenvolvido pela Gofas Software.
 
 ## Download
 
@@ -25,7 +25,7 @@ https://github.com/gofas/gofasgalaxpaypix/releases/latest/download/gofasgalaxpay
 
 - WHMCS >= 8.0
 - PHP >= 7.3
-- Conta GalaxPay com o módulo Webservice ativo e chave Pix cadastrada
+- Conta cel_cash com o módulo Webservice ativo e chave Pix cadastrada
 - Credenciais: Galax ID e Galax Hash (produção e testes)
 
 ## Instalação
@@ -37,12 +37,12 @@ https://github.com/gofas/gofasgalaxpaypix/releases/latest/download/gofasgalaxpay
 
 ## Configuração
 
-### Pré configuração na GalaxPay
+### Pré configuração na cel_cash
 
 1. No painel administrativo, em `Módulos`, ative o módulo Webservice.
 2. Em `Módulos > Webservice > Configurar`, copie as credenciais Galax ID e Galax Hash de produção.
 3. Repita o processo no painel do modo de testes para obter as credenciais de sandbox.
-4. Cadastre a chave Pix na sua conta GalaxPay.
+4. Cadastre a chave Pix na sua conta cel_cash.
 
 ### Pré configuração no WHMCS
 
@@ -67,7 +67,7 @@ Crie um campo personalizado de cliente para CPF e/ou CNPJ, ou dois campos distin
 
 ## Informações importantes
 
-- A tarifa do Pix é paga separadamente à GalaxPay, conforme o plano da sua conta.
+- A tarifa do Pix é paga separadamente à cel_cash, conforme o plano da sua conta.
 - Sempre faça backup antes de mudar algo no seu sistema.
 
 ## Suporte
