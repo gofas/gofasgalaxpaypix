@@ -1,5 +1,14 @@
 # Changelog
 
+## [Próxima atualização](https://github.com/gofas/gofasgalaxpaypix/tree/HEAD)
+
+
+**Melhorias:**
+
+- readme: conteudo da pagina do site transferido e captura de configuracao - [#8](https://github.com/gofas/gofasgalaxpaypix/issues/8)
+
+[Comparar versões](https://github.com/gofas/gofasgalaxpaypix/compare/v1.3.0...HEAD)
+
 ## [v1.3.0 - 12/07/2026](https://github.com/gofas/gofasgalaxpaypix/releases/tag/v1.3.0)
 
 
