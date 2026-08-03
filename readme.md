@@ -89,4 +89,4 @@ Crie um campo personalizado de cliente para CPF e/ou CNPJ, ou dois campos distin
 
 ## Licença
 
-[Contrato de licença de uso](https://gofas.net/contrato-de-venda-de-licenca-de-uso-de-software/)
+[Contrato de licença de uso](https://gofas.net/?p=9340)
